@@ -1,14 +1,11 @@
 import { useEffect, useState, useRef } from 'react';
-import { Link } from 'react-router-dom';
 import { useWishlist } from '../../context/WishlistContext';
-import { useCart } from '../../context/CartContext';
 import { api } from '../../services/api';
 import EmptyState from '../../components/ui/EmptyState';
 import ProductCard from '../../components/product/ProductCard';
 
 export default function Wishlist() {
   const { items, removeFromWishlist, itemCount } = useWishlist();
-  const { addToCart } = useCart();
   const [products, setProducts] = useState<any[]>([]);
   const fetchIdRef = useRef(0);
 

@@ -162,7 +162,7 @@ function wpProductToProduct(wp: any): Product {
     : [];
 
   const attributeSpecs = parsedAttributes
-    .map((attr) => ({
+    .map((attr: { name: string; options: string[] }) => ({
       label: attr.name,
       value: attr.options.join(', '),
     }));
@@ -378,9 +378,9 @@ export const wpService = {
       });
 
       return { id: data.number ? `#${data.number}` : data.id, ...orderData };
-    } catch (err) {
+    } catch (err: any) {
       // Log the error for debugging but return a mock order so the checkout flow doesn't fail
-      console.warn('[WP ORDER CREATE] falling back to mock order:', err?.response?.status || err);
+      console.warn('[WP ORDER CREATE] falling back to mock order:', err?.response?.status ?? err);
       return { id: `SP-${Math.floor(100000 + Math.random() * 900000)}`, ...orderData };
     }
   },
