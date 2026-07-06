@@ -5518,10 +5518,6 @@ SHOP PAGE RESPONSIVE
     flex-direction: row;
   }
 
-  .products-grid {
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important;
-    gap: 12px;
-  }
 
   .sort-wrap {
     flex: 1;
@@ -5568,11 +5564,6 @@ SHOP PAGE RESPONSIVE
 
   .shop-title h1 {
     font-size: 24px;
-  }
-
-  .products-grid {
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) !important;
-    gap: 8px;
   }
 
   .breadcrumb-nav {
@@ -5688,7 +5679,8 @@ SHOP PAGE RESPONSIVE
 }
 
 .product-service-grid div {
-  display: grid;
+  display: flex;
+  align-items: center;
   gap: 0.8rem;
   padding: 1.2rem;
   border-radius: 1rem;
@@ -6341,12 +6333,13 @@ FOOTER RESPONSIVE
 
   .footer-meta-left {
     align-items: flex-start;
-    flex-direction: column;
+    justify-content: center;
     gap: 0.9rem;
   }
 
   .footer-meta-right {
     gap: 1.6rem;
+    justify-content: center;
   }
 }
 
