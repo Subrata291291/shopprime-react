@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useReducer, useEffect } from 'react';
+import React, { createContext, useContext, useReducer, useEffect, useCallback } from 'react';
+import { toast } from 'react-toastify';
 import type { Product, CartItem } from '../types';
 
 // ─── State ────────────────────────────────────────────────────────────────────
@@ -95,15 +96,33 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const itemCount = state.items.reduce((sum, i) => sum + i.quantity, 0);
   const subtotal = state.items.reduce((sum, i) => sum + i.product.price * i.quantity, 0);
 
+  const addToCart = useCallback((product: Product, quantity = 1, color?: string, size?: string) => {
+    dispatch({ type: 'ADD_ITEM', payload: { product, quantity, color, size } });
+    toast.success(`${product.name} added to cart`);
+  }, []);
+
+  const removeFromCart = useCallback((id: number) => {
+    dispatch({ type: 'REMOVE_ITEM', payload: id });
+    toast.info('Product removed from cart');
+  }, []);
+
+  const updateQuantity = useCallback((id: number, quantity: number) => {
+    dispatch({ type: 'UPDATE_QTY', payload: { id, quantity } });
+  }, []);
+
+  const clearCart = useCallback(() => {
+    dispatch({ type: 'CLEAR_CART' });
+    toast.info('Cart cleared');
+  }, []);
+
   const value: CartContextValue = {
     items: state.items,
     itemCount,
     subtotal,
-    addToCart: (product, quantity = 1, color, size) =>
-      dispatch({ type: 'ADD_ITEM', payload: { product, quantity, color, size } }),
-    removeFromCart: (id) => dispatch({ type: 'REMOVE_ITEM', payload: id }),
-    updateQuantity: (id, quantity) => dispatch({ type: 'UPDATE_QTY', payload: { id, quantity } }),
-    clearCart: () => dispatch({ type: 'CLEAR_CART' }),
+    addToCart,
+    removeFromCart,
+    updateQuantity,
+    clearCart,
     isInCart: (id) => state.items.some((i) => i.product.id === id),
   };
 

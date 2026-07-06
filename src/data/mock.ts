@@ -79,8 +79,8 @@ export type MockPayment = {
 
 // ─── Mock Data ──────────────────────────────────────────────────────────────
 export const mockUser: MockUser = {
-  name: 'Alex Johnson',
-  email: 'alex.johnson@example.com',
+  name: 'Subrata Haldar',
+  email: 'subrata291291@gmail.com',
   avatar: 'https://i.pravatar.cc/150?img=5',
 };
 

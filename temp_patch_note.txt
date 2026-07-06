@@ -1,0 +1,1 @@
+Temporary note: patches to wp.ts and Shop.tsx to fix category 'All' duplication and price range computation.

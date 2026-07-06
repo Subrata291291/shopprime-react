@@ -1,5 +1,4 @@
 import { isWpConfigured } from '../config';
-import { MOCK_PRODUCTS } from '../data/products';
 import { mockUser, mockOrders, mockAddresses, mockPayments } from '../data/mock';
 import type { MockUser, MockOrder, MockOrderItem, MockWishlistItem, MockAddress, MockPayment } from '../data/mock';
 import { wpService } from './wp';
@@ -18,24 +17,28 @@ function delay<T>(data: T): Promise<T> {
 export const api = {
   // ─── Products ──────────────────────────────────────────────────────
   getProducts: async (filters?: Partial<ShopFilters>) => {
+    if (!isWpConfigured()) return [];
     return wpService.getProducts(filters);
   },
 
+  getCategories: async () => {
+    if (!isWpConfigured()) return [];
+    return wpService.getCategories();
+  },
+
+  getBrands: async () => {
+    if (!isWpConfigured()) return [];
+    return wpService.getBrands();
+  },
+
   getProduct: async (id: number) => {
-    if (isWpConfigured()) return wpService.getProduct(id);
-    return delay(MOCK_PRODUCTS.find(p => p.id === id) || null);
+    if (!isWpConfigured()) return null;
+    return wpService.getProduct(id);
   },
 
   getRelatedProducts: async (id: number, limit = 5) => {
-    if (isWpConfigured()) return wpService.getRelatedProducts(id, limit);
-    return delay(
-      (() => {
-        const product = MOCK_PRODUCTS.find(p => p.id === id);
-        if (!product) return [];
-        return MOCK_PRODUCTS.filter(p => p.category === product.category && p.id !== id)
-          .sort(() => Math.random() - 0.5).slice(0, limit);
-      })()
-    );
+    if (!isWpConfigured()) return [];
+    return wpService.getRelatedProducts(id, limit);
   },
 
   // ─── Auth / User ────────────────────────────────────────────────────

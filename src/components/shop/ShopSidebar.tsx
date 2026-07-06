@@ -1,9 +1,12 @@
 import { memo, useCallback } from 'react';
-import { CATEGORIES, BRANDS, MAX_PRICE } from '../../data/products';
+import { MAX_PRICE } from '../../data/products';
 import type { ShopFilters } from '../../types';
 
 interface ShopSidebarProps {
   filters: ShopFilters;
+  categories: string[];
+  brands: string[];
+  priceRangeMax: number;
   onFilterChange: (updated: Partial<ShopFilters>) => void;
   onApply: () => void;
   onReset: () => void;
@@ -23,7 +26,10 @@ const CATEGORY_ICONS: Record<string, string> = {
 
 const getCategoryColorClass = (category: string) => `category-color-${category.toLowerCase().replace(/\s+/g, '-')}`;
 
-const ShopSidebar = memo(function ShopSidebar({ filters, onFilterChange, onApply, onReset }: ShopSidebarProps) {
+const ShopSidebar = memo(function ShopSidebar({ filters, categories, brands, priceRangeMax, onFilterChange, onApply, onReset }: ShopSidebarProps) {
+  const categoryOptions = ['All', ...categories];
+  const brandOptions = brands;
+  const priceMax = Math.max(priceRangeMax || MAX_PRICE, 1);
   const toggleBrand = useCallback((brand: string) => {
     const brands = filters.brands.includes(brand)
       ? filters.brands.filter((b) => b !== brand)
@@ -37,7 +43,7 @@ const ShopSidebar = memo(function ShopSidebar({ filters, onFilterChange, onApply
       <p className="shop-sidebar-subtitle">Browse Departments</p>
 
       <div className="filter-section">
-        {CATEGORIES.map((cat) => {
+        {categoryOptions.map((cat) => {
           const isActive = filters.category === cat;
           return (
             <div
@@ -61,14 +67,14 @@ const ShopSidebar = memo(function ShopSidebar({ filters, onFilterChange, onApply
         <div className="price-range-wrap">
           <div className="price-inputs">
             <span className="price-value">$0</span>
-            <span className="price-value">${filters.maxPrice.toLocaleString()}</span>
+            <span className="price-value">${Math.min(filters.maxPrice, priceMax).toLocaleString()}</span>
           </div>
           <input
             type="range"
             min={0}
-            max={MAX_PRICE}
+            max={priceMax}
             step={50}
-            value={filters.maxPrice}
+            value={Math.min(filters.maxPrice, priceMax)}
             onChange={(e) => onFilterChange({ maxPrice: Number(e.target.value) })}
             aria-label="Maximum price filter"
           />
@@ -77,7 +83,7 @@ const ShopSidebar = memo(function ShopSidebar({ filters, onFilterChange, onApply
 
       <div className="filter-section">
         <h4>Brands</h4>
-        {BRANDS.map((brand) => (
+        {brandOptions.map((brand) => (
           <div key={brand} className="filter-item">
             <input
               type="checkbox"

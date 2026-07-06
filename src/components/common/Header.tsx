@@ -31,6 +31,7 @@ const Header = memo(function Header() {
       <nav className="navbar navbar-expand-lg navbar-dark top-nav px-3 px-lg-4 py-3">
         <div className="container">
           <Link className="navbar-brand fw-bold" to="/">
+            <span className="brand-mark" aria-hidden="true"></span>
             ShopPrime
           </Link>
 
@@ -46,7 +47,7 @@ const Header = memo(function Header() {
             <Link className="btn icon-btn position-relative" to="/cart">
               <i className="bi bi-cart3"></i>
               {itemCount > 0 && (
-                <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style={{ fontSize: '1rem' }}>
+                <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger cart-badge" style={{ fontSize: '1rem' }}>
                   {itemCount}
                 </span>
               )}

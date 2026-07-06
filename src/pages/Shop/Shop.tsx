@@ -4,6 +4,7 @@ import { api } from '../../services/api';
 import ShopSidebar from '../../components/shop/ShopSidebar';
 import Pagination from '../../components/shop/Pagination';
 import ProductCard from '../../components/product/ProductCard';
+import ProductSkeleton from '../../components/ui/ProductSkeleton';
 import Breadcrumb from '../../components/ui/Breadcrumb';
 import EmptyState from '../../components/ui/EmptyState';
 import FilterChips from '../../components/ui/FilterChips';
@@ -33,24 +34,82 @@ const SORT_OPTIONS: { value: ShopFilters['sortBy']; label: string }[] = [
 export default function Shop() {
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filters, setFilters] = useState<ShopFilters>(DEFAULT_FILTERS);
-  const [appliedFilters, setAppliedFilters] = useState<ShopFilters>(DEFAULT_FILTERS);
+  const [searchParams] = useSearchParams();
+  const queryCategory = searchParams.get('category')?.trim() || 'All';
+  const [filters, setFilters] = useState<ShopFilters>({
+    ...DEFAULT_FILTERS,
+    category: queryCategory,
+  });
+  const [appliedFilters, setAppliedFilters] = useState<ShopFilters>({
+    ...DEFAULT_FILTERS,
+    category: queryCategory,
+  });
   const [currentPage, setCurrentPage] = useState(1);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const [searchParams] = useSearchParams();
   const [searchTerm, setSearchTerm] = useState('');
+  const [categories, setCategories] = useState<string[]>([]);
+  const [brands, setBrands] = useState<string[]>([]);
+  const [priceRangeMax, setPriceRangeMax] = useState(MAX_FILTER_PRICE);
 
   useEffect(() => {
     setSearchTerm(searchParams.get('search')?.trim() ?? '');
   }, [searchParams]);
 
   useEffect(() => {
+    const queryCategory = searchParams.get('category')?.trim() || 'All';
+    setFilters((prev) => ({ ...prev, category: queryCategory }));
+    setAppliedFilters((prev) => ({ ...prev, category: queryCategory }));
+  }, [searchParams]);
+
+  useEffect(() => {
     document.title = 'Shop - ShopPrime';
-    api.getProducts(appliedFilters).then((products) => {
-      setAllProducts(products as Product[]);
-      setLoading(false);
-    }).catch(() => setLoading(false));
-  }, [appliedFilters]);
+
+    const loadShopData = async () => {
+      try {
+        setLoading(true);
+        const [products, categoryOptions, brandOptions] = await Promise.all([
+          api.getProducts(),
+          api.getCategories(),
+          api.getBrands(),
+        ]);
+
+        const productList = (products as Product[]) || [];
+        setAllProducts(productList);
+
+        const derivedCategories = categoryOptions.length > 0
+          ? categoryOptions.filter(Boolean)
+          : [...new Set(productList.map((product) => product.category).filter(Boolean))];
+        const derivedBrands = brandOptions.length > 0
+          ? brandOptions.filter((brand): brand is string => Boolean(brand))
+          : [...new Set(productList.map((product) => product.brand).filter((brand): brand is string => Boolean(brand)))];
+        const derivedMaxPrice = productList.length > 0
+          ? Math.max(...productList.map((product) => product.price))
+          : MAX_FILTER_PRICE;
+
+        setCategories(derivedCategories);
+        setBrands(derivedBrands);
+        setPriceRangeMax(derivedMaxPrice);
+
+        setFilters((prev) => ({
+          ...prev,
+          maxPrice: prev.maxPrice === MAX_FILTER_PRICE ? derivedMaxPrice : prev.maxPrice,
+        }));
+        setAppliedFilters((prev) => ({
+          ...prev,
+          maxPrice: prev.maxPrice === MAX_FILTER_PRICE ? derivedMaxPrice : prev.maxPrice,
+        }));
+      } catch {
+        setAllProducts([]);
+        setCategories([]);
+        setBrands([]);
+        setPriceRangeMax(MAX_FILTER_PRICE);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    void loadShopData();
+  }, []);
 
   const filteredProducts = useMemo(() => {
     let result = [...allProducts];
@@ -158,6 +217,9 @@ export default function Shop() {
         <div className="shop-page">
           <ShopSidebar
             filters={filters}
+            categories={categories}
+            brands={brands}
+            priceRangeMax={priceRangeMax}
             onFilterChange={handleFilterChange}
             onApply={handleApplyFilters}
             onReset={handleReset}
@@ -239,8 +301,10 @@ export default function Shop() {
             )}
 
             {loading ? (
-              <div className="shop-empty-state">
-                <div className="empty-state"><p>Loading products...</p></div>
+              <div className="products-grid">
+                {Array.from({ length: PRODUCTS_PER_PAGE }).map((_, i) => (
+                  <ProductSkeleton key={`sk-${i}`} />
+                ))}
               </div>
             ) : filteredProducts.length === 0 ? (
               <div className="shop-empty-state">

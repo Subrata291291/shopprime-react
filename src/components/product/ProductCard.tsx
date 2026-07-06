@@ -6,6 +6,8 @@ import type { Product } from '../../types';
 interface ProductCardProps {
   product: Product;
   listView?: boolean;
+  showWishlistControls?: boolean;
+  onRemove?: () => void;
 }
 
 const BADGE_CLASSES: Record<string, string> = {
@@ -15,7 +17,7 @@ const BADGE_CLASSES: Record<string, string> = {
   'sale': 'hot',
 };
 
-const ProductCard = memo(function ProductCard({ product, listView = false }: ProductCardProps) {
+const ProductCard = memo(function ProductCard({ product, showWishlistControls = false, onRemove }: ProductCardProps) {
   const { addToCart } = useCart();
 
   const handleCartClick = (e: React.MouseEvent) => {
@@ -24,48 +26,23 @@ const ProductCard = memo(function ProductCard({ product, listView = false }: Pro
     addToCart(product, 1);
   };
 
-  if (listView) {
-    return (
-      <div className="product-card-list d-flex flex-column flex-sm-row align-items-center gap-4 p-4 border border-secondary-subtle rounded-4 mb-3">
-        <Link to={`/product/${product.id}`} className="product-list-thumb position-relative flex-shrink-0">
-          <img src={product.image} alt={product.name} className="w-100 h-100 object-fit-cover rounded-3" />
-          {product.badge && (
-            <span className={`tag tag-list ${product.badgeType ?? 'new'}`}>
-              {product.badge}
-            </span>
-          )}
-        </Link>
-        <div className="flex-grow-1 text-sm-start text-center">
-          <Link to={`/product/${product.id}`} className="text-decoration-none text-white">
-            <h3 className="fs-4 mb-2">{product.name}</h3>
-          </Link>
-          <p className="small mb-3 custom-color">{product.description}</p>
-          <div className="d-flex align-items-center gap-3 justify-content-sm-start justify-content-center">
-            <strong className="fs-4 text-warning">${product.price.toFixed(2)}</strong>
-            {product.originalPrice && (
-              <span className="text-decoration-line-through custom-color">${product.originalPrice.toFixed(2)}</span>
-            )}
-          </div>
-        </div>
-        <div className="flex-shrink-0 mt-3 mt-sm-0">
-          <button className="add-to-cart-btn" onClick={handleCartClick}>
-            Add to Cart
-          </button>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <article className="product-card">
-      <Link to={`/product/${product.id}`} className="product-image d-block">
-        <img src={product.image} alt={product.name} />
+    <article className="product-card wide">
+      <div className="product-image-wrap position-relative">
+        <Link to={`/product/${product.id}`} className="product-image d-block">
+          <img src={product.image} alt={product.name} />
+        </Link>
         {product.badge && (
           <span className={`product-badge${product.badgeType ? ' ' + (BADGE_CLASSES[product.badgeType] ?? product.badgeType) : ''}`}>
             {product.badge}
           </span>
         )}
-      </Link>
+        {showWishlistControls && (
+          <button className="product-remove-btn" onClick={(e) => { e.preventDefault(); e.stopPropagation(); onRemove?.(); }} aria-label="Remove">
+            <i className="bi bi-x-lg" />
+          </button>
+        )}
+      </div>
       <div className="product-content">
         <Link to={`/product/${product.id}`} className="text-decoration-none text-white">
           <h3 className="product-name">{product.name}</h3>
@@ -80,12 +57,23 @@ const ProductCard = memo(function ProductCard({ product, listView = false }: Pro
             <span className="price-original">${product.originalPrice.toFixed(2)}</span>
           )}
         </div>
-        <button
-          className={`add-to-cart-btn${product.isPreOrder ? ' pre-order' : ''}`}
-          onClick={handleCartClick}
-        >
-          {product.isPreOrder ? 'PRE-ORDER NOW' : 'Add to Cart'}
-        </button>
+
+        <div className="product-stock mt-2">
+          <span className={`in-stock${product.inStock === false ? ' out-of-stock' : ''}`}>
+            <i className={`bi ${product.inStock === false ? 'bi-x-circle-fill' : 'bi-check-circle-fill'}`} />
+            {product.inStock === false ? 'Out of Stock' : 'In Stock'}
+          </span>
+        </div>
+
+        <div className="product-actions mt-3">
+          <button
+            className={`add-to-cart-btn w-100${product.isPreOrder ? ' pre-order' : ''}`}
+            onClick={handleCartClick}
+            disabled={!product.inStock && !product.isPreOrder}
+          >
+            {product.isPreOrder ? 'PRE-ORDER NOW' : 'Add to Cart'}
+          </button>
+        </div>
       </div>
     </article>
   );

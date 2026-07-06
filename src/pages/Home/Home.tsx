@@ -44,22 +44,37 @@ export default function Home() {
   };
 
   useEffect(() => {
-    api.getProducts({ sortBy: 'newest' }).then((products: any) => {
-      setNewArrivals(products.slice(0, 8));
-      const allDeals = products.filter((p: any) => p.originalPrice && p.originalPrice > p.price);
-      setDealsProducts(allDeals.slice(0, 3));
-      setMoreProducts(products.filter((p: any) => !p.badgeType).slice(0, 2));
-      const cats = [...new Set(products.map((p: any) => p.category).filter(Boolean))] as string[];
-      setCategories(cats.slice(0, 6));
-      const brandsSet = [...new Set(products.map((p: any) => p.brand).filter(Boolean))] as string[];
-      setBrands(brandsSet.slice(0, 7));
-    }).catch(() => {});
-    api.getProducts({ sortBy: 'popular' }).then((products: any) => {
-      setBestSellers(products.slice(0, 8));
-    }).catch(() => {});
-    api.getProducts({ sortBy: 'rating' }).then((products: any) => {
-      setPopularProducts(products.slice(0, 5));
-    }).catch(() => {});
+    const loadHomeProducts = async () => {
+      try {
+        const [newest, popular, rating] = await Promise.all([
+          api.getProducts({ sortBy: 'newest' }),
+          api.getProducts({ sortBy: 'popular' }),
+          api.getProducts({ sortBy: 'rating' }),
+        ]);
+
+        const arrivalProducts = newest.slice(0, 8);
+        setNewArrivals(arrivalProducts);
+
+        const newArrivalIds = new Set(arrivalProducts.map((p: any) => p.id));
+        const bestSellerProducts = popular.filter((p: any) => !newArrivalIds.has(p.id)).slice(0, 8);
+        setBestSellers(bestSellerProducts);
+
+        const bestSellerIds = new Set(bestSellerProducts.map((p: any) => p.id));
+        setPopularProducts(rating.filter((p: any) => !newArrivalIds.has(p.id) && !bestSellerIds.has(p.id)).slice(0, 5));
+
+        const allDeals = newest.filter((p: any) => p.originalPrice && p.originalPrice > p.price);
+        setDealsProducts(allDeals.slice(0, 3));
+        setMoreProducts(newest.filter((p: any) => !p.badgeType).slice(0, 2));
+        const cats = [...new Set(newest.map((p: any) => p.category).filter(Boolean))] as string[];
+        setCategories(cats.slice(0, 6));
+        const brandsSet = [...new Set(newest.map((p: any) => p.brand).filter(Boolean))] as string[];
+        setBrands(brandsSet.slice(0, 7));
+      } catch {
+        // silently ignore product load errors
+      }
+    };
+
+    loadHomeProducts();
   }, []);
 
   const quickCategories = categories.length > 0
@@ -133,7 +148,7 @@ export default function Home() {
 
       if (arrivalsRef.current) {
         arrivalsSwiper = new Swiper(arrivalsRef.current, {
-          spaceBetween: 16,
+          spaceBetween: 24,
           breakpoints: {
             0: { slidesPerView: 1.15 },
             576: { slidesPerView: 1.8 },
@@ -145,7 +160,7 @@ export default function Home() {
 
       if (bestSellersRef.current) {
         bestSellersSwiper = new Swiper(bestSellersRef.current, {
-          spaceBetween: 16,
+          spaceBetween: 24,
           breakpoints: {
             0: { slidesPerView: 1.2 },
             576: { slidesPerView: 2.1 },
@@ -377,17 +392,7 @@ export default function Home() {
           <div className="swiper-wrapper">
             {popularProducts.map(product => (
               <div key={product.id} className="swiper-slide">
-                <article className="product-card popular-product-card">
-                  <Link to={`/product/${product.id}`}>
-                    <img src={product.image} alt={product.name} />
-                  </Link>
-                  <div className="product-body">
-                    <Link to={`/product/${product.id}`} className="text-decoration-none text-white">
-                      <h3>{product.name}</h3>
-                    </Link>
-                    <strong>${product.price.toFixed(2)}</strong>
-                  </div>
-                </article>
+                <ProductCard product={product} />
               </div>
             ))}
           </div>

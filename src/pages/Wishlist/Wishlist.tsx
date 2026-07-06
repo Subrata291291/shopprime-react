@@ -4,6 +4,7 @@ import { useWishlist } from '../../context/WishlistContext';
 import { useCart } from '../../context/CartContext';
 import { api } from '../../services/api';
 import EmptyState from '../../components/ui/EmptyState';
+import ProductCard from '../../components/product/ProductCard';
 
 export default function Wishlist() {
   const { items, removeFromWishlist, itemCount } = useWishlist();
@@ -62,39 +63,12 @@ export default function Wishlist() {
 
         <div className="wishlist-grid">
           {displayItems.map((item: any) => (
-            <div className="product-card wishlist-card" key={item.id}>
-              <Link to={`/product/${item.id}`} className="product-image d-block">
-                <img src={item.image} alt={item.name} />
-              </Link>
-              <div className="product-body">
-                <Link to={`/product/${item.id}`} className="text-decoration-none text-white">
-                  <h3>{item.name}</h3>
-                </Link>
-                <div className="product-price">
-                  <strong>${item.price.toFixed(2)}</strong>
-                  {item.originalPrice && (
-                    <span className="old-price">${item.originalPrice.toFixed(2)}</span>
-                  )}
-                </div>
-                <div className="wishlist-actions">
-                  <button
-                    className="add-to-cart-btn"
-                    onClick={() => {
-                      addToCart(item, 1);
-                      removeFromWishlist(item.id);
-                    }}
-                  >
-                    <i className="bi bi-cart-plus"></i> Add to Cart
-                  </button>
-                  <button
-                    className="wishlist-remove-btn"
-                    onClick={() => removeFromWishlist(item.id)}
-                    title="Remove from wishlist"
-                  >
-                    <i className="bi bi-trash3"></i>
-                  </button>
-                </div>
-              </div>
+            <div key={item.id}>
+              <ProductCard
+                product={item}
+                showWishlistControls
+                onRemove={() => removeFromWishlist(item.id)}
+              />
             </div>
           ))}
         </div>
