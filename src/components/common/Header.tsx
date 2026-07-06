@@ -26,11 +26,6 @@ const Header = memo(function Header() {
     navigate(trimmedValue ? `/shop?search=${encodeURIComponent(trimmedValue)}` : '/shop');
   };
 
-  const handleClearSearch = () => {
-    setSearchValue('');
-    navigate('/shop');
-  };
-
   return (
     <header className="position-sticky top-0">
       <nav className="navbar navbar-expand-lg navbar-dark top-nav px-3 px-lg-4 py-3">
