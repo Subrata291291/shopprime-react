@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { api } from '../../services/api';
+import ProductCard from '../../components/product/ProductCard';
 import { useCart } from '../../context/CartContext';
 import { useWishlist } from '../../context/WishlistContext';
 import Swiper from 'swiper/bundle';
@@ -28,9 +29,18 @@ interface DetailPanelData {
 }
 
 function getProductDetails(product: any): DetailPanelData {
-  // If product already defines them, use them
-  if (product.highlights && product.specs) {
+  if (product.highlights && product.highlights.length && product.specs && product.specs.length) {
     return { highlights: product.highlights, specs: product.specs };
+  }
+
+  if (product.attributes && product.attributes.length) {
+    return {
+      highlights: product.highlights && product.highlights.length ? product.highlights : [],
+      specs: product.attributes.map((attr: any) => ({
+        label: attr.name,
+        value: Array.isArray(attr.options) ? attr.options.join(', ') : String(attr.options || ''),
+      })),
+    };
   }
 
   // Fallbacks based on category/name
@@ -270,16 +280,16 @@ export default function ProductDetails() {
 
     const timer = setTimeout(() => {
       const sw = new Swiper(relatedRef.current!, {
-        spaceBetween: 16,
+        spaceBetween: 0,
         navigation: {
           nextEl: '.product-related-swiper .swiper-button-next',
           prevEl: '.product-related-swiper .swiper-button-prev',
         },
         breakpoints: {
-          0: { slidesPerView: 1.15 },
-          576: { slidesPerView: 2.1 },
-          992: { slidesPerView: 3.1 },
-          1400: { slidesPerView: 4.1 },
+          0: { slidesPerView: 1.5 },
+          576: { slidesPerView: 2 },
+          768: { slidesPerView: 3 },
+          1024: { slidesPerView: 4.1 },
         },
       });
       relatedSwiper.current = sw;
@@ -417,7 +427,6 @@ export default function ProductDetails() {
                 />
               ))}
             </div>
-            <span>{product.rating.toFixed(1)}</span>
             <a href="#reviews">{product.reviewCount.toLocaleString()} reviews</a>
           </div>
 
@@ -501,7 +510,6 @@ export default function ProductDetails() {
               disabled={!product.inStock && !product.isPreOrder}
               type="button"
             >
-              <i className={`bi ${addedToCart ? 'bi-check-lg' : 'bi-cart-plus'}`} />
               {addedToCart ? 'Added!' : product.isPreOrder ? 'Pre-Order' : 'Add to Cart'}
             </button>
 
@@ -565,41 +573,35 @@ export default function ProductDetails() {
       </section>
 
       {/* ── Related Products ──────────────────────────────────── */}
-      <section className="content-section pb-50" id="reviews">
-        <div className="section-head">
-          <div>
-            <h2>You May Also Like</h2>
-            <p>Pair it with these customer favorites</p>
+      {relatedProducts.length > 0 && (
+        <section className="content-section pb-50" id="reviews">
+          <div className="section-head">
+            <div>
+              <h2>You May Also Like</h2>
+              <p>Pair it with these customer favorites</p>
+            </div>
+            <Link to="/shop">View All</Link>
           </div>
-          <Link to="/shop">View All</Link>
-        </div>
 
-        <div className="swiper product-related-swiper" ref={relatedRef}>
-          <div className="swiper-wrapper">
-            {relatedProducts.map((item) => (
-              <div key={item.id} className="swiper-slide">
-                <Link to={`/product/${item.id}`} className="text-decoration-none">
-                  <article className="product-card">
-                    {(item.badge || item.tag) && (
-                      <span className={`tag ${item.badgeType || item.tagClass || 'new'}`}>
-                        {item.badge || item.tag}
-                      </span>
-                    )}
-                    <img src={item.image} alt={item.name} />
-                    <div className="product-body">
-                      <h3>{item.name}</h3>
-                      <p>{item.description || item.desc}</p>
-                      <strong>${item.price.toFixed(2)}</strong>
-                    </div>
-                  </article>
-                </Link>
+          {relatedProducts.length === 1 ? (
+            <div className="related-single-product">
+              <ProductCard product={relatedProducts[0]} />
+            </div>
+          ) : (
+            <div className="swiper product-related-swiper" ref={relatedRef}>
+              <div className="swiper-wrapper">
+                {relatedProducts.map((item) => (
+                  <div key={item.id} className="swiper-slide">
+                    <ProductCard product={item} />
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-          <div className="swiper-button-prev" />
-          <div className="swiper-button-next" />
-        </div>
-      </section>
+              <div className="swiper-button-prev" />
+              <div className="swiper-button-next" />
+            </div>
+          )}
+        </section>
+      )}
     </main>
   );
 }

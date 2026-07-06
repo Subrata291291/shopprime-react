@@ -5,7 +5,8 @@ import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
 import { useWishlist } from '../../context/WishlistContext';
 import StatCard from '../../components/ui/StatCard';
-import type { User, Order, WishlistItem, Address, Payment } from '../../services/api';
+import ProductCard from '../../components/product/ProductCard';
+import type { User as ApiUser, Order, WishlistItem, Address, Payment } from '../../services/api';
 
 type AddressForm = {
   name: string;
@@ -25,7 +26,7 @@ export default function Account() {
   const { items: wishlistCtx, removeFromWishlist } = useWishlist();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('profile');
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<ApiUser | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
   const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
   const [addresses, setAddresses] = useState<Address[]>([]);
@@ -64,6 +65,7 @@ export default function Account() {
       api.getPayments()
     ]).then(([u, o, w, a, p]) => {
       if (u.status === 'fulfilled') setUser(u.value);
+      else if (authUser) setUser({ ...authUser, avatar: authUser.avatar ?? '' });
       if (o.status === 'fulfilled') {
         const fetchedOrders = o.value as Order[];
         const storedOrderJson = window.sessionStorage.getItem('shopprime_last_order');
@@ -100,7 +102,7 @@ export default function Account() {
       if (p.status === 'fulfilled') setPayments(p.value);
       setLoading(false);
     });
-  }, [isLoggedIn, navigate, wishlistCtx]);
+  }, [isLoggedIn, navigate, wishlistCtx, authUser]);
 
   const toggleSetting = useCallback((key: string) => {
     setSettings(prev => {
@@ -214,10 +216,6 @@ export default function Account() {
     setEditStatus('');
   }, []);
 
-  const handleWishlistAddToCart = useCallback((item: WishlistItem) => {
-    addToCart({ id: item.id, name: item.name, price: item.price, image: item.image } as any, 1);
-  }, [addToCart]);
-
   const handleWishlistAddAll = useCallback(() => {
     wishlist.forEach(item => addToCart({ id: item.id, name: item.name, price: item.price, image: item.image } as any, 1));
   }, [wishlist, addToCart]);
@@ -228,6 +226,45 @@ export default function Account() {
   }, [removeFromWishlist]);
 
   const memberSince = authUser?.id ? `2024` : '2024';
+
+  // Keep recent orders in sync with sessionStorage and cross-tab events
+  useEffect(() => {
+    const syncStoredOrder = () => {
+      const storedOrderJson = window.sessionStorage.getItem('shopprime_last_order');
+      if (!storedOrderJson) return;
+      try {
+        const storedOrder = JSON.parse(storedOrderJson) as Order;
+        setOrders(prev => {
+          if (!storedOrder) return prev;
+          if (prev.find(o => o.id === storedOrder.id)) return prev;
+          return [storedOrder, ...prev];
+        });
+      } catch {
+        // ignore invalid data
+      }
+    };
+
+    // initial sync
+    syncStoredOrder();
+
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === 'shopprime_last_order') syncStoredOrder();
+    };
+
+    // allow other parts of the app to dispatch a custom event with order detail
+    const handleCustom = (ev: any) => {
+      const order = ev?.detail as Order | undefined;
+      if (!order || !order.id) return;
+      setOrders(prev => (prev.find(o => o.id === order.id) ? prev : [order, ...prev]));
+    };
+
+    window.addEventListener('storage', handleStorage);
+    window.addEventListener('shopprime:order', handleCustom as EventListener);
+    return () => {
+      window.removeEventListener('storage', handleStorage);
+      window.removeEventListener('shopprime:order', handleCustom as EventListener);
+    };
+  }, []);
 
   if (loading || !user) {
     return (
@@ -485,44 +522,24 @@ export default function Account() {
                 {wishlist.length > 0 && (
                   <div className="db-wishlist-header-actions">
                     <button className="db-wishlist-share-btn" onClick={() => navigator.clipboard?.writeText(window.location.origin + '/wishlist')}><i className="bi bi-share"></i> Share Wishlist</button>
-                    <button className="db-wishlist-add-all-btn" onClick={handleWishlistAddAll}><i className="bi bi-cart-plus"></i> Add All to Cart</button>
+                    <button className="db-wishlist-add-all-btn" onClick={handleWishlistAddAll}>Add All to Cart</button>
                   </div>
                 )}
               </div>
               {wishlist.length > 0 ? (
                 <div className="db-wishlist-grid">
                   {wishlist.map(item => (
-                    <div key={item.id} className="db-wishlist-card">
-                      <button className="db-wishlist-remove" aria-label="Remove from wishlist" title="Remove from wishlist" onClick={() => handleWishlistRemove(item.id)}><i className="bi bi-x-lg"></i></button>
-                      <div className="db-wishlist-img" onClick={() => navigate(`/product/${item.id}`)} style={{ cursor: 'pointer' }}>
-                        <img src={item.image} alt={item.name} />
-                        {item.badge && (
-                          <span className={`db-wishlist-badge ${item.badge}`}>
-                            <i className={`bi ${item.badge === 'price-drop' ? 'bi-arrow-down-short' : item.badge === 'best-seller' ? 'bi-award' : 'bi-lightning-charge'}`} />
-                            {item.badge === 'price-drop' ? 'Price Drop' : item.badge === 'best-seller' ? 'Best Seller' : 'Trending'}
-                          </span>
-                        )}
-                      </div>
-                      <div className="db-wishlist-body">
-                        <div className="db-wishlist-rating">
-                          <span className="stars">{Array.from({ length: 5 }, (_, index) => index < item.rating ? '★' : '☆').join(' ')}</span>
-                          <span className="rating-count">({item.ratingCount})</span>
-                        </div>
-                        <div className="db-wishlist-name">{item.name}</div>
-                        <div className="db-wishlist-price-row">
-                          <span className="db-wishlist-price">${item.price.toFixed(2)}</span>
-                          {item.oldPrice && <span className="db-wishlist-price-old">${item.oldPrice.toFixed(2)}</span>}
-                        </div>
-                        <div className={`db-wishlist-stock ${item.stock==='in'?'in-stock':item.stock==='low'?'low-stock':'out-of-stock'}`}>
-                          {item.stock==='in' && <><i className="bi bi-check-circle-fill" /> In Stock</>}
-                          {item.stock==='low' && <><i className="bi bi-exclamation-triangle-fill" /> Only 2 Left</>}
-                          {item.stock==='out' && <><i className="bi bi-x-circle-fill" /> Out of Stock</>}
-                        </div>
-                        <button className={`db-wishlist-add-btn${item.stock==='out'?' disabled':''}`} disabled={item.stock==='out'} onClick={() => handleWishlistAddToCart(item)}>
-                          <i className={`bi ${item.stock==='out' ? 'bi-bell' : 'bi-cart3'}`}></i> {item.stock==='out' ? 'Notify Me' : 'Add to Cart'}
-                        </button>
-                      </div>
-                    </div>
+                    <ProductCard
+                      key={item.id}
+                      product={{
+                        ...item,
+                        originalPrice: item.oldPrice,
+                        inStock: item.stock !== 'out',
+                        reviewCount: item.ratingCount,
+                      } as any}
+                      showWishlistControls
+                      onRemove={() => handleWishlistRemove(item.id)}
+                    />
                   ))}
                 </div>
               ) : (

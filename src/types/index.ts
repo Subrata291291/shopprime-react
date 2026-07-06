@@ -11,8 +11,12 @@ export interface Product {
   badge?: string;
   badgeType?: 'sale' | 'new' | 'trending' | 'hot' | 'limited' | 'top-rated' | 'best-seller' | 'pre-order';
   category: string;
+  categoryId?: number;
+  categoryIds?: number[];
   brand?: string;
   description?: string;
+  highlights?: string[];
+  specs?: { label: string; value: string }[];
   inStock?: boolean;
   isPreOrder?: boolean;
   colors?: string[];

@@ -5,11 +5,12 @@ import { api } from '../../services/api';
 import CartItemCard from '../../components/ui/CartItemCard';
 import EmptyState from '../../components/ui/EmptyState';
 import Swiper from 'swiper/bundle';
+import ProductCard from '../../components/product/ProductCard';
 
 const PAYMENT_ICONS = ['bi-credit-card', 'bi-wallet2', 'bi-bag-check'];
 
 export default function Cart() {
-  const { items, removeFromCart, updateQuantity, subtotal, itemCount, clearCart, addToCart } = useCart();
+  const { items, removeFromCart, updateQuantity, subtotal, itemCount, clearCart } = useCart();
   const [recommended, setRecommended] = useState<any[]>([]);
   const recommendRef = useRef<HTMLDivElement>(null);
   const recommendSwiper = useRef<Swiper | null>(null);
@@ -29,7 +30,7 @@ export default function Cart() {
 
     const timer = setTimeout(() => {
       const sw = new Swiper(recommendRef.current!, {
-        spaceBetween: 16,
+        spaceBetween: 15,
         navigation: {
           nextEl: '.cart-recommend-swiper .swiper-button-next',
           prevEl: '.cart-recommend-swiper .swiper-button-prev',
@@ -38,10 +39,10 @@ export default function Cart() {
         observeParents: true,
         observeSlideChildren: true,
         breakpoints: {
-          0: { slidesPerView: 2.15 },
+          0: { slidesPerView: 1.5 },
           576: { slidesPerView: 2 },
           768: { slidesPerView: 3 },
-          1024: { slidesPerView: 4 },
+          1024: { slidesPerView: 4.1 },
         },
       });
       recommendSwiper.current = sw;
@@ -194,23 +195,7 @@ export default function Cart() {
           <div className="swiper-wrapper">
             {recommended.map((rec) => (
               <div key={rec.id} className="swiper-slide">
-                <article className="cart-recommend-card">
-                  <Link to={`/product/${rec.id}`} className="product-image d-block">
-                    <img src={rec.image} alt={rec.name} />
-                  </Link>
-                  <div className="cart-recommend-copy">
-                    <Link to={`/product/${rec.id}`} className="text-decoration-none text-white">
-                      <h3>{rec.name}</h3>
-                    </Link>
-                    <strong>${rec.price.toFixed(2)}</strong>
-                  </div>
-                  <button
-                    className="btn cart-add-btn"
-                    onClick={() => addToCart(rec, 1)}
-                  >
-                    <i className="bi bi-cart-plus me-1" />Add to Cart
-                  </button>
-                </article>
+                <ProductCard product={rec} />
               </div>
             ))}
           </div>

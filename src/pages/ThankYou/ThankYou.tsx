@@ -103,6 +103,21 @@ export default function ThankYou() {
     };
   }, [order, navigate]);
 
+  // Persist latest order to sessionStorage and notify other parts of the app
+  useEffect(() => {
+    if (!order) return;
+    try {
+      window.sessionStorage.setItem('shopprime_last_order', JSON.stringify(order));
+    } catch {
+      // ignore storage errors
+    }
+    try {
+      window.dispatchEvent(new CustomEvent('shopprime:order', { detail: order }));
+    } catch {
+      // ignore
+    }
+  }, [order]);
+
   if (!order) return null;
 
   return (

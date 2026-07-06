@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
+import { toast } from 'react-toastify';
 import { api } from '../services/api';
 import type { User } from '../types';
 
@@ -35,8 +36,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         localStorage.setItem(USER_KEY, JSON.stringify(result.user));
         localStorage.setItem(TOKEN_KEY, result.token);
         setUser(result.user);
+        toast.success('Logged in successfully');
         return true;
       }
+      toast.error('Login failed. Please check your credentials.');
+      return false;
+    } catch {
+      toast.error('Login failed. Please try again later.');
       return false;
     } finally {
       setLoading(false);
@@ -51,8 +57,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         localStorage.setItem(USER_KEY, JSON.stringify(result.user));
         localStorage.setItem(TOKEN_KEY, result.token);
         setUser(result.user);
+        toast.success('Account created successfully');
         return true;
       }
+      toast.error('Registration failed. Please try again.');
+      return false;
+    } catch {
+      toast.error('Registration failed. Please try again later.');
       return false;
     } finally {
       setLoading(false);

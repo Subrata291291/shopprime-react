@@ -53,6 +53,12 @@ const GuestCheckout = ({ items, subtotal, onComplete, onLogin, submitting }: {
   };
 
   const handleGuestSubmit = () => {
+    // Basic validation
+    if (!email.trim() || !firstName.trim() || !lastName.trim() || !address.trim() || !city.trim() || !postalCode.trim() || !phone.trim()) {
+      window.alert('Please fill out all required fields before completing purchase.');
+      return;
+    }
+
     const paymentMethodLabel = paymentTab === 'card' ? 'Credit / Debit Card' : 'UPI / Wallet';
     onComplete({
       total,
