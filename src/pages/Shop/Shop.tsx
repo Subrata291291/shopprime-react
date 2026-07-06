@@ -67,14 +67,17 @@ export default function Shop() {
     const loadShopData = async () => {
       try {
         setLoading(true);
-        const [products, categoryOptions, brandOptions] = await Promise.all([
+        const [productsResult, categoriesResult, brandsResult] = await Promise.allSettled([
           api.getProducts(),
           api.getCategories(),
           api.getBrands(),
         ]);
 
-        const productList = (products as Product[]) || [];
+        const productList = productsResult.status === 'fulfilled' ? (productsResult.value as Product[]) : [];
         setAllProducts(productList);
+
+        const categoryOptions = categoriesResult.status === 'fulfilled' ? categoriesResult.value : [];
+        const brandOptions = brandsResult.status === 'fulfilled' ? brandsResult.value : [];
 
         const derivedCategories = categoryOptions.length > 0
           ? categoryOptions.filter(Boolean)
