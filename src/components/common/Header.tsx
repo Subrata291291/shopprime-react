@@ -82,16 +82,6 @@ const Header = memo(function Header() {
                 onChange={(event) => setSearchValue(event.target.value)}
                 aria-label="Search products"
               />
-              {searchValue && (
-                <button
-                  type="button"
-                  className="search-clear"
-                  onClick={handleClearSearch}
-                  aria-label="Clear search"
-                >
-                  <i className="bi bi-x-lg" />
-                </button>
-              )}
             </form>
 
             <ul className="navbar-nav d-flex align-items-lg-center">
@@ -131,16 +121,6 @@ const Header = memo(function Header() {
               onChange={(event) => setSearchValue(event.target.value)}
               aria-label="Search products"
             />
-            {searchValue && (
-              <button
-                type="button"
-                className="search-clear"
-                onClick={handleClearSearch}
-                aria-label="Clear search"
-              >
-                <i className="bi bi-x-lg" />
-              </button>
-            )}
           </form>
 
           <div className="list-group list-group-flush mobile-links">
