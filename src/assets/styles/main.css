@@ -106,7 +106,6 @@ header {
   color: var(--text);
   font-size: 1.4rem;
 }
-
 .search-wrap .form-control::placeholder {
   color: #6f7b8c;
 }
