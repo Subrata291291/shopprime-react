@@ -38,7 +38,7 @@ export default function Cart() {
         observeParents: true,
         observeSlideChildren: true,
         breakpoints: {
-          0: { slidesPerView: 1.15 },
+          0: { slidesPerView: 2.15 },
           576: { slidesPerView: 2 },
           768: { slidesPerView: 3 },
           1024: { slidesPerView: 4 },
