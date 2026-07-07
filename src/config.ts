@@ -15,3 +15,7 @@ export const isWpConfigured = (): boolean => {
 };
 
 export default config;
+
+console.log("WP URL:", import.meta.env.VITE_WP_URL);
+console.log("Consumer Key:", import.meta.env.VITE_WC_CONSUMER_KEY);
+console.log("Configured:", isWpConfigured());
