@@ -6272,10 +6272,6 @@ body {
     border-radius: 1.8rem;
   }
 
-  .quick-pill {
-    height: 8.4rem;
-  }
-
   .db-layout {
     grid-template-columns: 1fr;
   }
