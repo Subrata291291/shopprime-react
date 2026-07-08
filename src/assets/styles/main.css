@@ -5413,6 +5413,8 @@ input[type="range"]::-moz-range-thumb {
   overflow: hidden;
   background: #0f0f0f;
   box-shadow: 0 6px 18px rgba(0,0,0,0.6);
+}
+.product-list .product-card.wide {
   display: flex;
   justify-content: space-between;
   align-items: center;
