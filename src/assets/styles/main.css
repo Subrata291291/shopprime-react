@@ -771,8 +771,19 @@ header {
   color: #ff9dad;
 }
 
+.brands-swiper {
+  padding-bottom: 0.8rem;
+}
+
+.brands-swiper .swiper-wrapper {
+  align-items: center;
+}
+
 .brands-swiper .swiper-slide {
   width: auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .catalog-swiper .swiper-slide {
@@ -780,16 +791,21 @@ header {
 }
 
 .brand-tile {
-  min-width: 150px;
-  text-align: center;
-  padding: 18px 28px;
+  min-width: 120px;
+  max-width: 210px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.4rem 2rem;
   border-radius: 18px;
   border: 1px solid var(--line);
   background: var(--panel-2);
   color: #b6c2d3;
   font-weight: 600;
-  letter-spacing: 0.14em;
-  font-size: 1.3rem;
+  letter-spacing: 0.12em;
+  font-size: 1.25rem;
+  text-align: center;
+  white-space: nowrap;
 }
 
 .popular-swiper .swiper-slide {
