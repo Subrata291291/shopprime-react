@@ -26,6 +26,8 @@ const HERO_SLIDES = [
   },
 ];
 
+const DEFAULT_BRANDS = ['SONIQ', 'NOVA', 'ORBIT', 'ZENIX', 'LUMA', 'AXON', 'PULSE'];
+
 export default function Home() {
   const { addToCart } = useCart();
   const [timeLeft, setTimeLeft] = useState('');
@@ -36,6 +38,8 @@ export default function Home() {
   const [dealsProducts, setDealsProducts] = useState<any[]>([]);
   const [brands, setBrands] = useState<string[]>([]);
   const [moreProducts, setMoreProducts] = useState<any[]>([]);
+
+  const visibleBrands = brands.length > 0 ? brands : DEFAULT_BRANDS;
 
   const CATEGORY_ICONS: Record<string, string> = {
     Electronics: 'bi-phone', Gaming: 'bi-controller', Audio: 'bi-speaker',
@@ -68,7 +72,7 @@ export default function Home() {
         const cats = [...new Set(newest.map((p: any) => p.category).filter(Boolean))] as string[];
         setCategories(cats.slice(0, 6));
         const brandsSet = [...new Set(newest.map((p: any) => p.brand).filter(Boolean))] as string[];
-        setBrands(brandsSet.slice(0, 7));
+        setBrands(brandsSet);
       } catch {
         // silently ignore product load errors
       }
@@ -131,14 +135,13 @@ export default function Home() {
     let heroSwiper: Swiper | null = null;
     let arrivalsSwiper: Swiper | null = null;
     let bestSellersSwiper: Swiper | null = null;
-    let brandsSwiper: Swiper | null = null;
     let popularSwiper: Swiper | null = null;
 
     const timer = setTimeout(() => {
       if (heroRef.current) {
         heroSwiper = new Swiper(heroRef.current, {
           modules: [Autoplay],
-          loop: true,
+          loop: false,
           autoplay: {
             delay: 4500,
             disableOnInteraction: false,
@@ -170,24 +173,6 @@ export default function Home() {
         });
       }
 
-      if (brandsRef.current) {
-        brandsSwiper = new Swiper(brandsRef.current, {
-          modules: [Autoplay],
-          loop: true,
-          speed: 600,
-          spaceBetween: 24,
-          autoplay: {
-            delay: 1800,
-            disableOnInteraction: false,
-          },
-          breakpoints: {
-            0: { slidesPerView: 2.1 },
-            576: { slidesPerView: 3.2 },
-            992: { slidesPerView: 5.4 },
-          },
-        });
-      }
-
       if (popularRef.current) {
         popularSwiper = new Swiper(popularRef.current, {
           spaceBetween: 24,
@@ -206,10 +191,43 @@ export default function Home() {
       heroSwiper?.destroy(true, true);
       arrivalsSwiper?.destroy(true, true);
       bestSellersSwiper?.destroy(true, true);
-      brandsSwiper?.destroy(true, true);
       popularSwiper?.destroy(true, true);
     };
   }, []);
+
+  // Separate effect to reinitialize brand swiper when brands data changes
+  useEffect(() => {
+    if (visibleBrands.length > 0 && brandsRef.current) {
+      // Destroy existing brand swiper if it exists
+      const swiperInstance = (brandsRef.current as any).swiper;
+      if (swiperInstance) {
+        swiperInstance.destroy(true, true);
+      }
+
+      // Reinitialize brand swiper with loaded brands
+      const timer = setTimeout(() => {
+        new Swiper(brandsRef.current!, {
+          modules: [Autoplay],
+          loop: true,
+          speed: 600,
+          spaceBetween: 14,
+          autoplay: {
+            delay: 2200,
+            disableOnInteraction: false,
+          },
+          breakpoints: {
+            0: { slidesPerView: 2.5 },
+            480: { slidesPerView: 3.5 },
+            768: { slidesPerView: 5 },
+            1024: { slidesPerView: 5.5 },
+            1200: { slidesPerView: 6.5 },
+          },
+        });
+      }, 50);
+
+      return () => clearTimeout(timer);
+    }
+  }, [visibleBrands]);
 
   return (
     <main className="container">
@@ -350,10 +368,10 @@ export default function Home() {
       </Section>
 
       {/* Brands Showcase */}
-      <Section title="Top Brands Showcase" subtitle="Brands powering the future">
+      <Section title="Top Brands Showcase" subtitle="Brands powering the future" className="m-50">
         <div className="swiper brands-swiper" ref={brandsRef}>
           <div className="swiper-wrapper">
-            {(brands.length > 0 ? brands : ['SONIQ', 'NOVA', 'ORBIT', 'ZENIX', 'LUMA', 'AXON', 'PULSE']).map((brand) => (
+            {visibleBrands.map((brand) => (
               <div className="swiper-slide" key={brand}>
                 <div className="brand-tile">{brand}</div>
               </div>
