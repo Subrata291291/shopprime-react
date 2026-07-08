@@ -6474,10 +6474,6 @@ body {
 }
 
 @media (max-width: 575.98px) {
-  .container {
-    padding-left: 1.4rem;
-    padding-right: 1.4rem;
-  }
 
   .navbar-brand {
     font-size: 2rem;
