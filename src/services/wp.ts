@@ -1,10 +1,15 @@
 import axios from 'axios';
-import config, { isWpConfigured } from '../config';
+import config, { isStoreConfigured, isWpConfigured } from '../config';
 import type { Product, ShopFilters } from '../types';
 import { mockUser, mockOrders, mockWishlist, mockAddresses, mockPayments } from '../data/mock';
 
 const wpApi = axios.create({
   baseURL: config.wpUrl ? `${config.wpUrl}/wp-json` : '',
+  timeout: 15000,
+});
+
+const storeApi = axios.create({
+  baseURL: '/zyra-api',
   timeout: 15000,
 });
 
@@ -32,6 +37,32 @@ wpApi.interceptors.response.use(
 );
 
 function wpProductToProduct(wp: any): Product {
+  const isStoreProduct = Boolean(wp.prices);
+  const minorUnit = Number(wp.prices?.currency_minor_unit ?? 2);
+  const divisor = 10 ** (Number.isFinite(minorUnit) ? minorUnit : 2);
+  const fromStorePrice = (value: unknown): string | undefined => {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? String(parsed / divisor) : undefined;
+  };
+
+  if (isStoreProduct) {
+    wp = {
+      ...wp,
+      price: fromStorePrice(wp.prices.price) ?? '0',
+      regular_price: fromStorePrice(wp.prices.regular_price),
+      stock_status: wp.is_in_stock ? 'instock' : wp.is_on_backorder ? 'onbackorder' : 'outofstock',
+      rating_count: wp.review_count,
+      attributes: Array.isArray(wp.attributes)
+        ? wp.attributes.map((attribute: any) => ({
+            name: attribute.name,
+            options: Array.isArray(attribute.terms)
+              ? attribute.terms.map((term: any) => term.name)
+              : [],
+          }))
+        : [],
+    };
+  }
+
   const meta = wp.meta_data?.reduce((acc: any, m: any) => {
     acc[m.key] = m.value;
     return acc;
@@ -212,9 +243,9 @@ function mapStatus(status: string): 'Ordered' | 'Shipped' | 'In Transit' | 'Deli
 export const wpService = {
   // ─── Products ──────────────────────────────────────────────────────
   async getProducts(filters?: Partial<ShopFilters>): Promise<Product[]> {
-    if (!isWpConfigured()) return [];
+    if (!isStoreConfigured()) return [];
 
-    const params: any = { per_page: 100, status: 'publish' };
+    const params: any = { per_page: 100 };
     if (filters?.category && filters.category !== 'All') {
       params.category = filters.category;
     }
@@ -239,7 +270,7 @@ export const wpService = {
     let page = 1;
 
     while (true) {
-      const { data } = await wpApi.get('/wc/v3/products', { params: { ...params, page } });
+      const { data } = await storeApi.get('/products', { params: { ...params, page } });
       if (!data.length) break;
 
       allProducts.push(...data);
@@ -251,9 +282,9 @@ export const wpService = {
   },
 
   async getProduct(id: number): Promise<Product | null> {
-    if (!isWpConfigured()) return null;
+    if (!isStoreConfigured()) return null;
     try {
-      const { data } = await wpApi.get(`/wc/v3/products/${id}`);
+      const { data } = await storeApi.get(`/products/${id}`);
       return wpProductToProduct(data);
     } catch {
       return null;
@@ -261,33 +292,21 @@ export const wpService = {
   },
 
   async getRelatedProducts(id: number, limit = 5): Promise<Product[]> {
-    if (!isWpConfigured()) return [];
-    const product = await this.getProduct(id);
-    if (!product) return [];
-
-    const params: any = { exclude: id, per_page: limit };
-    if (product.categoryIds?.length) {
-      params.category = product.categoryIds.join(',');
-    }
-
-    const { data } = await wpApi.get('/wc/v3/products', { params });
+    if (!isStoreConfigured()) return [];
+    const { data } = await storeApi.get('/products', {
+      params: { related: id, per_page: limit },
+    });
     return data.map(wpProductToProduct);
   },
 
   async getCategories(): Promise<string[]> {
-    if (!isWpConfigured()) return [];
-    const { data } = await wpApi.get('/wc/v3/products/categories', { params: { per_page: 100 } });
+    if (!isStoreConfigured()) return [];
+    const { data } = await storeApi.get('/products/categories', { params: { per_page: 100 } });
     return data.map((c: any) => c.name).filter((n: any) => Boolean(n));
   },
 
   async getBrands(): Promise<string[]> {
-    if (!isWpConfigured()) return [];
-    try {
-      const { data } = await wpApi.get('/wc/v3/products/brands', { params: { per_page: 100 } });
-      return data.map((b: any) => b.name);
-    } catch {
-      return [];
-    }
+    return [];
   },
 
   // ─── Orders ─────────────────────────────────────────────────────────

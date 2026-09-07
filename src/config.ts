@@ -14,4 +14,8 @@ export const isWpConfigured = (): boolean => {
   return !!config.wpUrl && !isPlaceholderValue(config.wpUrl) && !isPlaceholderValue(config.wcConsumerKey) && !isPlaceholderValue(config.wcConsumerSecret);
 };
 
+export const isStoreConfigured = (): boolean => {
+  return !!config.wpUrl && !isPlaceholderValue(config.wpUrl);
+};
+
 export default config;

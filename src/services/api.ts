@@ -1,4 +1,4 @@
-import { isWpConfigured } from '../config';
+import { isStoreConfigured, isWpConfigured } from '../config';
 import { mockUser, mockOrders, mockAddresses, mockPayments } from '../data/mock';
 import type { MockUser, MockOrder, MockOrderItem, MockWishlistItem, MockAddress, MockPayment } from '../data/mock';
 import { wpService } from './wp';
@@ -17,27 +17,27 @@ function delay<T>(data: T): Promise<T> {
 export const api = {
   // ─── Products ──────────────────────────────────────────────────────
   getProducts: async (filters?: Partial<ShopFilters>) => {
-    if (!isWpConfigured()) return [];
+    if (!isStoreConfigured()) return [];
     return wpService.getProducts(filters);
   },
 
   getCategories: async () => {
-    if (!isWpConfigured()) return [];
+    if (!isStoreConfigured()) return [];
     return wpService.getCategories();
   },
 
   getBrands: async () => {
-    if (!isWpConfigured()) return [];
+    if (!isStoreConfigured()) return [];
     return wpService.getBrands();
   },
 
   getProduct: async (id: number) => {
-    if (!isWpConfigured()) return null;
+    if (!isStoreConfigured()) return null;
     return wpService.getProduct(id);
   },
 
   getRelatedProducts: async (id: number, limit = 5) => {
-    if (!isWpConfigured()) return [];
+    if (!isStoreConfigured()) return [];
     return wpService.getRelatedProducts(id, limit);
   },
 
