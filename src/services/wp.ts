@@ -17,13 +17,6 @@ wpApi.interceptors.request.use((req) => {
   if (config.jwtToken) {
     req.headers.Authorization = `Bearer ${config.jwtToken}`;
   }
-  if (config.wcConsumerKey && config.wcConsumerSecret && req.url?.startsWith('/wc')) {
-    req.params = {
-      ...req.params,
-      consumer_key: config.wcConsumerKey,
-      consumer_secret: config.wcConsumerSecret,
-    };
-  }
   return req;
 });
 

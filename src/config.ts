@@ -5,13 +5,11 @@ const isPlaceholderValue = (value: string): boolean => {
 
 const config = {
   wpUrl: import.meta.env.VITE_WP_URL || '',
-  wcConsumerKey: import.meta.env.VITE_WC_CONSUMER_KEY || '',
-  wcConsumerSecret: import.meta.env.VITE_WC_CONSUMER_SECRET || '',
-  jwtToken: import.meta.env.VITE_JWT_TOKEN || '',
+  jwtToken: '',
 };
 
 export const isWpConfigured = (): boolean => {
-  return !!config.wpUrl && !isPlaceholderValue(config.wpUrl) && !isPlaceholderValue(config.wcConsumerKey) && !isPlaceholderValue(config.wcConsumerSecret);
+  return !!config.wpUrl && !isPlaceholderValue(config.wpUrl);
 };
 
 export const isStoreConfigured = (): boolean => {
