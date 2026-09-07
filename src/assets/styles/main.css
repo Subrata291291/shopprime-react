@@ -6159,14 +6159,13 @@ SHOP PAGE RESPONSIVE
 .related-single-product {
   display: grid;
   grid-template-columns: 1fr;
-  justify-items: start;
+  justify-items: center;
   gap: 1.6rem;
   padding: 0 0.4rem;
 }
 
 .related-single-product .product-card {
-  /* width: 100%;
-  max-width: 1040px; */
+  width: min(100%, 36rem);
   min-height: auto;
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.22);
 }
