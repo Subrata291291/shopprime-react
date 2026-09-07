@@ -6165,7 +6165,7 @@ SHOP PAGE RESPONSIVE
 }
 
 .related-single-product .product-card {
-  width: min(100%, 36rem);
+  width: min(100%, 30rem);
   min-height: auto;
   box-shadow: 0 12px 30px rgba(0, 0, 0, 0.22);
 }
