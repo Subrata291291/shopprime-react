@@ -4,7 +4,7 @@ const isPlaceholderValue = (value: string): boolean => {
 };
 
 const config = {
-  wpUrl: import.meta.env.VITE_WP_URL || '',
+  wpUrl: 'https://zyraluxe.in/',
   jwtToken: '',
 };
 
