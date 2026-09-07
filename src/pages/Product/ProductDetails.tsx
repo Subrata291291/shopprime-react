@@ -300,7 +300,7 @@ export default function ProductDetails() {
       relatedSwiper.current?.destroy(true, true);
       relatedSwiper.current = null;
     };
-  }, [product, id]);
+  }, [product, id, relatedProducts.length]);
 
   if (loadingProduct) {
     return (
