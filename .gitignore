@@ -26,4 +26,4 @@ dist-ssr
 .env
 .env.*
 !.env.example
-check_wp.js
+scripts/check_wp.js
