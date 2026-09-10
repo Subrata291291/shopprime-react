@@ -1058,12 +1058,12 @@ header {
   align-items: center;
   justify-content: space-between;
   padding: 1rem 0 1.4rem;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid var(--line);
   font-size: 1.5rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: #1d1d1d;
+  color: #dce5f3;
 }
 
 .cart-items {
@@ -1078,7 +1078,7 @@ header {
   gap: 1.8rem;
   align-items: center;
   padding: 1.6rem 0;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  border-bottom: 1px solid var(--line);
   background: transparent;
 }
 
@@ -1116,7 +1116,7 @@ header {
   font-size: 1.8rem;
   line-height: 1.3;
   font-weight: 700;
-  color: #111;
+  color: var(--text);
   text-transform: uppercase;
 }
 
@@ -1131,7 +1131,7 @@ header {
 .cart-item-qty-label {
   font-size: 1.4rem;
   letter-spacing: 0.04em;
-  color: #222;
+  color: #dce5f3;
 }
 
 .cart-item-price {
@@ -1139,7 +1139,7 @@ header {
 }
 
 .cart-item-qty-label {
-  color: #666;
+  color: #9eacbd;
 }
 
 .cart-item-controls {
@@ -1153,7 +1153,7 @@ header {
 .qty-stepper {
   display: inline-flex;
   align-items: center;
-  border: 1px solid rgba(0, 0, 0, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 0.6rem;
   overflow: hidden;
   background: #fff;
@@ -1179,7 +1179,7 @@ header {
 .cart-remove-btn {
   border: 0;
   background: transparent;
-  color: #222;
+  color: #9eacbd;
   font-size: 1.5rem;
   cursor: pointer;
 }
@@ -1187,14 +1187,14 @@ header {
 .cart-item-total {
   display: flex;
   justify-content: flex-end;
-  color: #111;
+  color: var(--text);
   font-size: 1.8rem;
   font-weight: 700;
 }
 
 .order-summary-card {
   background: transparent;
-  border: 1px solid rgba(0, 0, 0, 0.08);
+  border: 1px solid var(--line);
   border-radius: 0;
   padding: 0;
   box-shadow: none;
@@ -1206,14 +1206,14 @@ header {
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  color: #111;
+  color: var(--text);
 }
 
 .summary-lines {
   display: grid;
   gap: 1.6rem;
   padding: 0 0 1.8rem;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  border-bottom: 1px solid var(--line);
 }
 
 .summary-row {
@@ -1221,14 +1221,14 @@ header {
   align-items: center;
   justify-content: space-between;
   gap: 1.2rem;
-  color: #222;
+  color: #bdc8d8;
   font-size: 1.5rem;
 }
 
 .summary-row strong {
   font-size: 1.6rem;
   font-weight: 700;
-  color: #111;
+  color: var(--text);
 }
 
 .shipping-note-row {
@@ -1239,7 +1239,7 @@ header {
 .shipping-note {
   display: block;
   font-size: 1.2rem;
-  color: #666;
+  color: #9eacbd;
   line-height: 1.5;
   font-style: normal;
 }
@@ -1250,8 +1250,8 @@ header {
   justify-content: space-between;
   gap: 1.2rem;
   padding: 1.8rem 0;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-  color: #111;
+  border-bottom: 1px solid var(--line);
+  color: var(--text);
 }
 
 .summary-total span {
@@ -1262,7 +1262,7 @@ header {
 }
 
 .summary-total strong {
-  color: #111;
+  color: var(--text);
   font-size: 2.4rem;
   font-weight: 700;
 }
@@ -1270,7 +1270,7 @@ header {
 .coupon-section {
   margin-bottom: 1.8rem;
   padding-bottom: 1.8rem;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+  border-bottom: 1px solid var(--line);
 }
 
 .coupon-toggle {
@@ -1281,7 +1281,7 @@ header {
   gap: 0.6rem;
   background: transparent;
   border: 0;
-  color: #333;
+  color: #dce5f3;
   font-size: 1.5rem;
   padding: 0;
   cursor: pointer;
