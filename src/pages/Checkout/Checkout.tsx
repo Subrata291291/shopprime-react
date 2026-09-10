@@ -7,6 +7,17 @@ import OrderItemCard from '../../components/ui/OrderItemCard';
 import type { Address } from '../../services/api';
 
 type CheckoutMode = 'guest' | 'logged-in';
+type ShippingMethod = 'xpressbees_surface' | 'xpressbees_air' | 'delhivery_surface' | 'delhivery_air' | 'blue_dart_air';
+
+const shippingOptions: { id: ShippingMethod; name: string; delivery: string; price: number }[] = [
+  { id: 'xpressbees_surface', name: 'Xpressbees Surface', delivery: 'Delivery by Sep 15, 2026', price: 118.36 },
+  { id: 'xpressbees_air', name: 'Xpressbees Air', delivery: 'Delivery by Sep 13, 2026', price: 147.36 },
+  { id: 'delhivery_surface', name: 'Delhivery Surface', delivery: 'Delivery by Sep 15, 2026', price: 131.36 },
+  { id: 'delhivery_air', name: 'Delhivery Air', delivery: 'Delivery by Sep 13, 2026', price: 164.36 },
+  { id: 'blue_dart_air', name: 'Blue Dart Air', delivery: 'Delivery by Sep 12, 2026', price: 215.25 },
+];
+
+const defaultShipping = shippingOptions[0];
 
 type AddressForm = {
   name: string;
@@ -27,8 +38,7 @@ const GuestCheckout = ({ items, subtotal, onComplete, onLogin, submitting }: {
   onLogin: () => void;
   submitting: boolean;
 }) => {
-  const [deliveryMethod, setDeliveryMethod] = useState<'standard' | 'express'>('standard');
-  const [paymentTab, setPaymentTab] = useState<'card' | 'upi'>('card');
+  const [deliveryMethod, setDeliveryMethod] = useState<ShippingMethod>(defaultShipping.id);
   const [promoCode, setPromoCode] = useState('');
   const [promoApplied, setPromoApplied] = useState(false);
   const [email, setEmail] = useState('');
@@ -39,11 +49,10 @@ const GuestCheckout = ({ items, subtotal, onComplete, onLogin, submitting }: {
   const [postalCode, setPostalCode] = useState('');
   const [phone, setPhone] = useState('');
 
-  const shipping = deliveryMethod === 'express' ? 15 : 0;
+  const shipping = shippingOptions.find((option) => option.id === deliveryMethod) || defaultShipping;
   const discount = promoApplied ? subtotal * 0.1 : 0;
   const finalSubtotal = subtotal - discount;
-  const tax = finalSubtotal * 0.08;
-  const total = finalSubtotal + shipping + tax;
+  const total = finalSubtotal + shipping.price;
 
   const applyPromo = () => {
     const code = promoCode.trim().toUpperCase();
@@ -59,12 +68,12 @@ const GuestCheckout = ({ items, subtotal, onComplete, onLogin, submitting }: {
       return;
     }
 
-    const paymentMethodLabel = paymentTab === 'card' ? 'Credit / Debit Card' : 'UPI / Wallet';
     onComplete({
       total,
       subtotal: finalSubtotal,
-      shipping,
-      tax,
+      shipping: shipping.price,
+      shippingMethod: shipping.name,
+      tax: 0,
       email,
       firstName,
       lastName,
@@ -73,7 +82,7 @@ const GuestCheckout = ({ items, subtotal, onComplete, onLogin, submitting }: {
       postalCode,
       phone,
       deliveryMethod,
-      paymentMethod: paymentMethodLabel,
+      paymentMethod: 'Razorpay',
     });
   };
 
@@ -139,26 +148,18 @@ const GuestCheckout = ({ items, subtotal, onComplete, onLogin, submitting }: {
             <h2 className="section-title"><i className="bi bi-box-seam me-2"></i>Delivery Method</h2>
           </div>
           <div className="delivery-options">
-            <div className={`delivery-option${deliveryMethod === 'standard' ? ' active' : ''}`} onClick={() => setDeliveryMethod('standard')}>
+            {shippingOptions.map((option) => (
+            <div key={option.id} className={`delivery-option${deliveryMethod === option.id ? ' active' : ''}`} onClick={() => setDeliveryMethod(option.id)}>
               <div className="d-flex align-items-center gap-3 w-100">
-                <input type="radio" name="delivery-method" checked={deliveryMethod === 'standard'} readOnly />
+                <input type="radio" name="delivery-method" checked={deliveryMethod === option.id} readOnly />
                 <label className="delivery-label flex-grow-1">
-                  <span className="delivery-name">Standard Shipping</span>
-                  <span className="delivery-desc">3-5 Business Days</span>
+                  <span className="delivery-name">{option.name}</span>
+                  <span className="delivery-desc">{option.delivery}</span>
                 </label>
-                <span className="delivery-price">FREE</span>
+                <span className="delivery-price">₹{option.price.toFixed(2)}</span>
               </div>
             </div>
-            <div className={`delivery-option${deliveryMethod === 'express' ? ' active' : ''}`} onClick={() => setDeliveryMethod('express')}>
-              <div className="d-flex align-items-center gap-3 w-100">
-                <input type="radio" name="delivery-method" checked={deliveryMethod === 'express'} readOnly />
-                <label className="delivery-label flex-grow-1">
-                  <span className="delivery-name">Express Delivery</span>
-                  <span className="delivery-desc">Next Day Delivery</span>
-                </label>
-                <span className="delivery-price">$15.00</span>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
 
@@ -167,40 +168,10 @@ const GuestCheckout = ({ items, subtotal, onComplete, onLogin, submitting }: {
           <div className="section-header">
             <h2 className="section-title"><i className="bi bi-credit-card-2-front me-2"></i>Payment Details</h2>
           </div>
-          <div className="payment-tabs mb-4">
-            <button className={`payment-tab${paymentTab === 'card' ? ' active' : ''}`} onClick={() => setPaymentTab('card')}>
-              <i className="bi bi-credit-card"></i> Credit Card
-            </button>
-            <button className={`payment-tab${paymentTab === 'upi' ? ' active' : ''}`} onClick={() => setPaymentTab('upi')}>
-              <i className="bi bi-wallet2"></i> UPI / Wallet
-            </button>
+          <div className="payment-option active">
+            <input type="radio" name="guest-payment" checked readOnly />
+            <label className="payment-label"><i className="bi bi-wallet2"></i> Pay by Razorpay</label>
           </div>
-          {paymentTab === 'card' ? (
-            <div>
-              <div className="form-group mb-3">
-                <label>Card Number</label>
-                <div className="input-icon-wrapper">
-                  <input type="text" className="form-control guest-input" placeholder="0000 0000 0000 0000" />
-                  <i className="bi bi-credit-card"></i>
-                </div>
-              </div>
-              <div className="form-row">
-                <div className="form-group">
-                  <label>Expiry Date</label>
-                  <input type="text" className="form-control guest-input" placeholder="MM/YY" />
-                </div>
-                <div className="form-group">
-                  <label>CVV</label>
-                  <input type="text" className="form-control guest-input" placeholder="123" />
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="upi-placeholder text-center p-4 border border-secondary rounded" style={{ borderStyle: 'dashed', borderColor: 'rgba(255,255,255,0.15)' }}>
-              <i className="bi bi-qr-code-scan" style={{ fontSize: '3rem', color: '#4d7fff' }}></i>
-              <p className="mt-2 mb-0" style={{ fontSize: '1.4rem', color: '#bbb' }}>Select your UPI app or scan QR at next step</p>
-            </div>
-          )}
         </div>
       </div>
 
@@ -221,8 +192,7 @@ const GuestCheckout = ({ items, subtotal, onComplete, onLogin, submitting }: {
             ))}
           </div>
           <div className="price-line"><span className="price-label">Subtotal</span><span className="price-value" id="guest-subtotal">{promoApplied ? <><span style={{ textDecoration: 'line-through', color: '#777' }}>${subtotal.toFixed(2)}</span> <span style={{ color: '#4dff4d' }}>${finalSubtotal.toFixed(2)}</span></> : `$${subtotal.toFixed(2)}`}</span></div>
-          <div className="price-line"><span className="price-label">Shipping</span><span className={`price-value${shipping === 0 ? ' free' : ''}`} style={{ color: shipping === 0 ? '#4dff4d' : '#fff' }}>{shipping === 0 ? 'FREE' : `$${shipping.toFixed(2)}`}</span></div>
-          <div className="price-line"><span className="price-label">Estimated Tax</span><span className="price-value">${tax.toFixed(2)}</span></div>
+          <div className="price-line"><span className="price-label">Delivery</span><span className="price-value">₹{shipping.price.toFixed(2)}</span></div>
           <div className="price-total"><span className="price-total-label">Total</span><span className="price-total-value guest-total-amount">${total.toFixed(2)}</span></div>
           <button className="confirm-btn guest-purchase-btn" style={{ background: '#ff6b35' }} onClick={handleGuestSubmit} disabled={submitting}>
             {submitting ? 'Processing...' : 'Complete Purchase'} <i className="bi bi-lock-fill"></i>
@@ -251,7 +221,7 @@ export default function Checkout() {
   const [mode, setMode] = useState<CheckoutMode>(isLoggedIn ? 'logged-in' : 'guest');
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState<'card' | 'upi' | 'netbank'>('card');
+  const [selectedShipping, setSelectedShipping] = useState<ShippingMethod>(defaultShipping.id);
   const [savedAddresses, setSavedAddresses] = useState<Address[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
   const [showAddressModal, setShowAddressModal] = useState(false);
@@ -351,9 +321,9 @@ export default function Checkout() {
   };
 
   const selectedAddress = savedAddresses.find((addr) => addr.id === selectedAddressId) || null;
-  const loggedInShipping = 0;
-  const loggedInTax = subtotal * 0.08;
-  const loggedInTotal = subtotal + loggedInShipping + loggedInTax;
+  const loggedInShippingOption = shippingOptions.find((option) => option.id === selectedShipping) || defaultShipping;
+  const loggedInShipping = loggedInShippingOption.price;
+  const loggedInTotal = subtotal + loggedInShipping;
 
   const handleComplete = async (data: any) => {
     setSubmitting(true);
@@ -363,15 +333,15 @@ export default function Checkout() {
     const orderCity = selectedAddress ? selectedAddress.line2 : data.city || 'City';
     const orderEmail = user?.email || data.email;
     const orderPhone = selectedAddress?.phone || data.phone || '';
-    const paymentMethodLabel = data.paymentMethod || (paymentMethod === 'card' ? 'Credit / Debit Card' : paymentMethod === 'upi' ? 'UPI / Wallet' : 'Net Banking');
-    const paymentBrandLabel = data.paymentBrand || (paymentMethod === 'card' ? 'Card' : paymentMethod === 'upi' ? 'UPI' : 'Net Banking');
+    const paymentMethodLabel = data.paymentMethod || 'Razorpay';
+    const paymentBrandLabel = data.paymentBrand || 'Razorpay';
     const orderPayload = {
       items: items.map((item) => ({
         product: item.product,
         quantity: item.quantity,
         selectedColor: item.selectedColor,
       })),
-      shippingMethod: (data.shipping || loggedInShipping) > 0 ? 'Express Delivery' : 'Standard Shipping',
+      shippingMethod: data.shippingMethod || loggedInShippingOption.name,
       shippingCost: data.shipping || loggedInShipping,
       shippingAddress: {
         name,
@@ -382,15 +352,21 @@ export default function Checkout() {
       },
       total: data.total,
       subtotal: data.subtotal,
-      tax: data.tax || loggedInTax,
+      tax: data.tax || 0,
       email: orderEmail,
       phone: orderPhone,
       paymentMethod: paymentMethodLabel,
       paymentBrand: paymentBrandLabel,
+      paymentGateway: 'razorpay',
       billingNote: `Paid via ${paymentBrandLabel}`,
     };
     try {
       const result = await api.createOrder(orderPayload);
+      if (result.paymentUrl && paymentMethodLabel === 'Razorpay') {
+        clearCart();
+        window.location.assign(result.paymentUrl);
+        return;
+      }
       const orderDate = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
       const estDeliveryDate = new Date(Date.now() + 4 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
       const orderData = {
@@ -401,8 +377,8 @@ export default function Checkout() {
         total: data.total,
         subtotal: data.subtotal,
         shipping: data.shipping || loggedInShipping,
-        shippingMethod: (data.shipping || loggedInShipping) > 0 ? 'Express Delivery' : 'Standard Shipping',
-        tax: data.tax || loggedInTax,
+        shippingMethod: data.shippingMethod || loggedInShippingOption.name,
+        tax: data.tax || 0,
         paymentMethod: paymentMethodLabel,
         paymentBrand: paymentBrandLabel,
         billingNote: `Paid via ${paymentBrandLabel}`,
@@ -536,6 +512,26 @@ export default function Checkout() {
               <div className="checkout-section">
                 <div className="section-header">
                   <div className="section-number">3</div>
+                  <h2 className="section-title">SHIPPING OPTIONS</h2>
+                </div>
+                <div className="delivery-options">
+                  {shippingOptions.map((option) => (
+                    <div key={option.id} className={`delivery-option${selectedShipping === option.id ? ' active' : ''}`} onClick={() => setSelectedShipping(option.id)}>
+                      <div className="d-flex align-items-center gap-3 w-100">
+                        <input type="radio" name="logged-in-delivery" checked={selectedShipping === option.id} readOnly />
+                        <label className="delivery-label flex-grow-1">
+                          <span className="delivery-name">{option.name}</span>
+                          <span className="delivery-desc">{option.delivery}</span>
+                        </label>
+                        <span className="delivery-price">₹{option.price.toFixed(2)}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="checkout-section">
+                <div className="section-header">
+                  <div className="section-number">4</div>
                   <h2 className="section-title">ORDER SUMMARY</h2>
                 </div>
                 {items.map((item) => (
@@ -560,48 +556,16 @@ export default function Checkout() {
             </div>
             <div className="checkout-sidebar">
               <div className="payment-section">
-                <div className="payment-section-title"><i className="bi bi-credit-card"></i> PAYMENT OPTIONS</div>
-                <div className={`payment-option${paymentMethod === 'card' ? ' active' : ''}`} onClick={() => setPaymentMethod('card')}>
-                  <input type="radio" name="payment" checked={paymentMethod === 'card'} onChange={() => setPaymentMethod('card')} />
-                  <label className="payment-label"><i className="bi bi-credit-card"></i> Credit / Debit Card</label>
+                <div className="payment-option active">
+                  <input type="radio" name="payment" checked readOnly />
+                  <label className="payment-label"><i className="bi bi-wallet2"></i> Pay by Razorpay</label>
                 </div>
-                <div className={`payment-option${paymentMethod === 'upi' ? ' active' : ''}`} onClick={() => setPaymentMethod('upi')}>
-                  <input type="radio" name="payment" checked={paymentMethod === 'upi'} onChange={() => setPaymentMethod('upi')} />
-                  <label className="payment-label"><i className="bi bi-wallet2"></i> UPI (iPhone / Google Pay)</label>
-                </div>
-                <div className={`payment-option${paymentMethod === 'netbank' ? ' active' : ''}`} onClick={() => setPaymentMethod('netbank')}>
-                  <input type="radio" name="payment" checked={paymentMethod === 'netbank'} onChange={() => setPaymentMethod('netbank')} />
-                  <label className="payment-label"><i className="bi bi-bank"></i> Net Banking</label>
-                </div>
-                {paymentMethod === 'card' ? (
-                  <div className="card-form">
-                    <div className="form-group" style={{ marginBottom: '12px' }}>
-                      <label>Card Number</label>
-                      <input type="text" placeholder="1234 5678 9012 3456" />
-                    </div>
-                    <div className="form-row">
-                      <div className="form-group"><label>MM/YY</label><input type="text" placeholder="MM/YY" /></div>
-                      <div className="form-group"><label>CVV</label><input type="text" placeholder="CVV" /></div>
-                    </div>
-                  </div>
-                ) : paymentMethod === 'upi' ? (
-                  <div className="upi-placeholder text-center p-4 border border-secondary rounded" style={{ borderStyle: 'dashed', borderColor: 'rgba(255,255,255,0.15)' }}>
-                    <i className="bi bi-qr-code-scan" style={{ fontSize: '3rem', color: '#4d7fff' }}></i>
-                    <p className="mt-2 mb-0" style={{ fontSize: '1.4rem', color: '#bbb' }}>Use your UPI app after clicking Confirm Order.</p>
-                  </div>
-                ) : (
-                  <div className="upi-placeholder text-center p-4 border border-secondary rounded" style={{ borderStyle: 'dashed', borderColor: 'rgba(255,255,255,0.15)' }}>
-                    <i className="bi bi-bank" style={{ fontSize: '3rem', color: '#4d7fff' }}></i>
-                    <p className="mt-2 mb-0" style={{ fontSize: '1.4rem', color: '#bbb' }}>Net banking will be processed in the next step.</p>
-                  </div>
-                )}
               </div>
               <div className="price-section">
                 <h3 className="price-section-title">PRICE DETAILS</h3>
                 <div className="price-line"><span className="price-label">Price ({items.length} {items.length === 1 ? 'item' : 'items'})</span><span className="price-value">${subtotal.toFixed(2)}</span></div>
                 <div className="price-line"><span className="price-label">Discount</span><span className="price-value discount">-$0.00</span></div>
-                <div className="price-line"><span className="price-label">Delivery Charges</span><span className="price-value free">FREE</span></div>
-                <div className="price-line"><span className="price-label">Estimated Tax</span><span className="price-value">${loggedInTax.toFixed(2)}</span></div>
+                <div className="price-line"><span className="price-label">Delivery ({loggedInShippingOption.name})</span><span className="price-value">₹{loggedInShipping.toFixed(2)}</span></div>
                 <div className="price-total"><span className="price-total-label">Total Amount</span><span className="price-total-value">${loggedInTotal.toFixed(2)}</span></div>
                 <button
                   className="confirm-btn"
@@ -609,8 +573,10 @@ export default function Checkout() {
                     total: loggedInTotal,
                     subtotal,
                     shipping: loggedInShipping,
-                    tax: loggedInTax,
-                    paymentMethod,
+                    tax: 0,
+                    paymentMethod: 'Razorpay',
+                    paymentBrand: 'Razorpay',
+                    shippingMethod: loggedInShippingOption.name,
                     email: user?.email,
                     phone: selectedAddress?.phone || '',
                     address: selectedAddress?.line1 || '',

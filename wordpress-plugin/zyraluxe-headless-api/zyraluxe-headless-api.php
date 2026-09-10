@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Zyra Luxe Headless API
  * Description: Headless authentication, customer data, WooCommerce checkout, and booking/order endpoints for the Zyra Luxe React storefront.
- * Version: 1.0.2
+ * Version: 1.0.3
  * Author: Zyra Luxe
  * Requires at least: 6.4
  * Requires PHP: 7.4
@@ -308,8 +308,24 @@ final class Zyra_Luxe_Headless_API {
         $shipping = self::address((array) ($body['shipping'] ?? []));
         $order->set_address($billing, 'billing');
         $order->set_address($shipping, 'shipping');
-        $order->set_payment_method(sanitize_text_field((string) ($body['payment_method'] ?? '')));
-        $order->set_payment_method_title(sanitize_text_field((string) ($body['payment_method_title'] ?? '')));
+        $payment_method = sanitize_key((string) ($body['payment_method'] ?? 'razorpay'));
+        $payment_title = sanitize_text_field((string) ($body['payment_method_title'] ?? 'Pay by Razorpay'));
+        $order->set_payment_method($payment_method);
+        $order->set_payment_method_title($payment_title);
+        $shipping_methods = [
+            'Xpressbees Surface' => 118.36,
+            'Xpressbees Air' => 147.36,
+            'Delhivery Surface' => 131.36,
+            'Delhivery Air' => 164.36,
+            'Blue Dart Air' => 215.25,
+        ];
+        $shipping_method = sanitize_text_field((string) ($body['shipping_method'] ?? 'Xpressbees Surface'));
+        $shipping_cost = isset($shipping_methods[$shipping_method]) ? (float) $shipping_methods[$shipping_method] : $shipping_methods['Xpressbees Surface'];
+        $shipping_item = new WC_Order_Item_Shipping();
+        $shipping_item->set_method_title($shipping_method);
+        $shipping_item->set_method_id(sanitize_title($shipping_method));
+        $shipping_item->set_total($shipping_cost);
+        $order->add_item($shipping_item);
         $order->calculate_totals();
         $order->update_meta_data('_zyra_headless_source', 'react');
         $order->add_order_note('Order created by the Zyra Luxe React storefront.');

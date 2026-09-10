@@ -7,8 +7,6 @@ import EmptyState from '../../components/ui/EmptyState';
 import Swiper from 'swiper/bundle';
 import ProductCard from '../../components/product/ProductCard';
 
-const PAYMENT_ICONS = ['bi-credit-card', 'bi-wallet2', 'bi-bag-check'];
-
 export default function Cart() {
   const { items, removeFromCart, updateQuantity, subtotal, itemCount, clearCart } = useCart();
   const [recommended, setRecommended] = useState<any[]>([]);
@@ -54,23 +52,8 @@ export default function Cart() {
       recommendSwiper.current = null;
     };
   }, [recommended]);
-  const [couponCode, setCouponCode] = useState('');
-  const [couponApplied, setCouponApplied] = useState(false);
-  const [couponError, setCouponError] = useState('');
-
-  const shipping = subtotal > 500 ? 0 : subtotal > 0 ? 9.99 : 0;
-  const discount = couponApplied ? subtotal * 0.1 : 0;
-  const total = subtotal - discount + shipping;
-
-  const handleApplyCoupon = () => {
-    if (couponCode.trim().toUpperCase() === 'SAVE10') {
-      setCouponApplied(true);
-      setCouponError('');
-    } else {
-      setCouponApplied(false);
-      setCouponError('Invalid coupon code. Try SAVE10 for 10% off!');
-    }
-  };
+  const shipping: number = 0;
+  const total = subtotal + shipping;
 
   if (itemCount === 0) {
     return (
@@ -92,20 +75,26 @@ export default function Cart() {
   return (
     <div className="container cart-page">
       <div className="cart-header-block">
-        <h1>Shopping Cart</h1>
-        <p>{itemCount} {itemCount === 1 ? 'item' : 'items'} in your bag</p>
+        <h1>Cart</h1>
       </div>
 
       <section className="cart-layout">
-        <div className="cart-items">
-          {items.map((item) => (
-            <CartItemCard
-              key={`${item.product.id}-${item.selectedColor}`}
-              item={item}
-              onUpdateQuantity={updateQuantity}
-              onRemove={removeFromCart}
-            />
-          ))}
+        <div className="cart-items-panel">
+          <div className="cart-table-header">
+            <span>Product</span>
+            <span>Total</span>
+          </div>
+
+          <div className="cart-items">
+            {items.map((item) => (
+              <CartItemCard
+                key={`${item.product.id}-${item.selectedColor}`}
+                item={item}
+                onUpdateQuantity={updateQuantity}
+                onRemove={removeFromCart}
+              />
+            ))}
+          </div>
 
           <div className="cart-footer-actions">
             <Link to="/shop" className="continue-shopping-link">
@@ -119,68 +108,37 @@ export default function Cart() {
         </div>
 
         <aside className="order-summary-card">
-          <h2>Order Summary</h2>
+          <h2>Cart Totals</h2>
 
           <div className="coupon-section">
-            <label className="coupon-label">Coupon Code</label>
-            <div className="coupon-input-wrapper">
-              <input
-                type="text"
-                className="form-control coupon-input"
-                placeholder="Enter code (try SAVE10)"
-                value={couponCode}
-                onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                onKeyDown={(e) => e.key === 'Enter' && handleApplyCoupon()}
-              />
-              <button className={`coupon-btn ${couponApplied ? 'applied' : ''}`} type="button" onClick={handleApplyCoupon}>
-                {couponApplied ? 'Applied' : 'Apply'}
-              </button>
-            </div>
-            {couponApplied && (
-              <div className="coupon-success">
-                <i className="bi bi-check-circle me-1" />SAVE10 applied - 10% off!
-              </div>
-            )}
-            {couponError && (
-              <div className="coupon-error">
-                <i className="bi bi-x-circle me-1" />{couponError}
-              </div>
-            )}
+            <button type="button" className="coupon-toggle">
+              Add coupons
+              <i className="bi bi-chevron-down" />
+            </button>
           </div>
 
           <div className="summary-lines">
-            <div><span>Total MRP</span><span>${subtotal.toFixed(2)}</span></div>
-            {couponApplied && (
-              <div><span>Discount (10%)</span><span className="summary-accent">-${discount.toFixed(2)}</span></div>
-            )}
-            <div>
-              <span>Delivery Charges</span>
-              <span className={shipping === 0 ? 'summary-accent' : ''}>
-                {shipping === 0 ? 'FREE' : `$${shipping.toFixed(2)}`}
-              </span>
+            <div className="summary-row">
+              <span>Subtotal</span>
+              <strong>₹{subtotal.toFixed(2)}</strong>
             </div>
-            <div><span>Tax (10%)</span><span>${(subtotal * 0.1).toFixed(2)}</span></div>
+            <div className="summary-row">
+              <span>Shipping</span>
+              <strong>{shipping === 0 ? 'FREE' : `₹${shipping.toFixed(2)}`}</strong>
+            </div>
+            <div className="summary-row shipping-note-row">
+              <span className="shipping-note">Xpressbees Surface ( Delivery by Sep 15, 2026 )</span>
+            </div>
           </div>
 
           <div className="summary-total">
-            <div>
-              <span>Total Amount</span>
-              {couponApplied && <small>You saved ${discount.toFixed(2)} on this order</small>}
-            </div>
-            <strong>${total.toFixed(2)}</strong>
+            <span>Estimated total</span>
+            <strong>₹{total.toFixed(2)}</strong>
           </div>
 
           <Link className="btn summary-btn-primary" to="/checkout">
-            Place Order
+            PROCEED TO CHECKOUT
           </Link>
-          <div className="summary-secure">
-            Secure Checkout with ShopPrime Vault
-          </div>
-          <div className="summary-icons">
-            {PAYMENT_ICONS.map((icon) => (
-              <i key={icon} className={`bi ${icon}`} />
-            ))}
-          </div>
         </aside>
       </section>
 

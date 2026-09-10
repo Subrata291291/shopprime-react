@@ -395,8 +395,9 @@ export const wpService = {
     const { data } = await headlessApi.post('/orders', {
       billing,
       shipping: billing,
-      payment_method: 'cod',
+      payment_method: 'razorpay',
       payment_method_title: orderData.paymentMethod || 'Pending payment',
+      shipping_method: orderData.shippingMethod,
       items: orderData.items?.map((item: any) => ({
         product_id: item.product.id,
         quantity: item.quantity,
@@ -404,7 +405,11 @@ export const wpService = {
         selectedSize: item.selectedSize,
       })) || [],
     });
-    return { id: data.number ? `#${data.number}` : data.id, ...orderData };
+    return {
+      id: data.number ? `#${data.number}` : data.id,
+      paymentUrl: data.payment_url || '',
+      ...orderData,
+    };
   },
 
   // ─── Auth / Customer ────────────────────────────────────────────────

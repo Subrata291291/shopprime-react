@@ -9,31 +9,39 @@ interface CartItemCardProps {
 }
 
 const CartItemCard = memo(function CartItemCard({ item, onUpdateQuantity, onRemove }: CartItemCardProps) {
-  const { product, quantity, selectedColor } = item;
+  const { product, quantity } = item;
   return (
     <article className="cart-item-card">
-      <img src={product.image} alt={product.name} />
+      <div className="cart-item-image-wrap">
+        <img src={product.image} alt={product.name} />
+      </div>
+
       <div className="cart-item-main">
         <div className="cart-item-copy">
-          <Link to={`/product/${product.id}`} className="text-decoration-none text-white">
+          <Link to={`/product/${product.id}`} className="text-decoration-none">
             <h3>{product.name}</h3>
           </Link>
-          {selectedColor && <p>{selectedColor}</p>}
+          <div className="cart-item-meta">
+            <span className="cart-item-price">₹{(product.price * quantity).toFixed(2)}</span>
+            <span className="cart-item-qty-label">NET QUANTITY (N-{quantity})</span>
+          </div>
         </div>
-        <button className="cart-remove-btn" onClick={() => onRemove(product.id)} aria-label={`Remove ${product.name}`}>
-          <i className="bi bi-trash3" />
-        </button>
-        <div className="cart-item-footer">
-          <div className="qty-stepper">
+
+        <div className="cart-item-controls">
+          <div className="qty-stepper qty-stepper-compact">
             <button type="button" onClick={() => onUpdateQuantity(product.id, Math.max(1, quantity - 1))} aria-label="Decrease quantity">-</button>
             <span>{quantity}</span>
             <button type="button" onClick={() => onUpdateQuantity(product.id, Math.min(99, quantity + 1))} aria-label="Increase quantity">+</button>
           </div>
-          <div className="cart-price-block">
-            <strong>${(product.price * quantity).toFixed(2)}</strong>
-            {product.originalPrice && <span><del>${(product.originalPrice * quantity).toFixed(2)}</del></span>}
-          </div>
+
+          <button className="cart-remove-btn" onClick={() => onRemove(product.id)} aria-label={`Remove ${product.name}`}>
+            <i className="bi bi-trash3" />
+          </button>
         </div>
+      </div>
+
+      <div className="cart-item-total">
+        <span>₹{(product.price * quantity).toFixed(2)}</span>
       </div>
     </article>
   );
