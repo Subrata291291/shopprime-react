@@ -368,7 +368,7 @@ export default function Account() {
                               <td>{o.date}</td>
                               <td><span className={`db-status-badge ${('' + o.status).toLowerCase().replace(/\s+/g,'-')}`}>{o.status.toLowerCase()}</span></td>
                               <td>${typeof o.total === 'number' ? o.total.toFixed(2) : o.total}</td>
-                              <td><button className="db-btn-track" onClick={() => navigate(`/track-order?order=${o.id}`)}>Track</button></td>
+                              <td><button className="db-btn-track" onClick={() => navigate(`/track-order?order=${encodeURIComponent(o.id)}`)}>Track</button></td>
                             </tr>
                           ))}
                         </tbody>
@@ -475,7 +475,7 @@ export default function Account() {
                                   Reorder
                                 </button>
                               ) : normalizedStatus === 'shipped' || normalizedStatus === 'in transit' || normalizedStatus === 'ordered' ? (
-                                <button className="db-btn-track" onClick={() => navigate(`/track-order?order=${order.id}`)}>
+                                <button className="db-btn-track" onClick={() => navigate(`/track-order?order=${encodeURIComponent(order.id)}`)}>
                                   Track Package
                                 </button>
                               ) : (
@@ -757,7 +757,7 @@ export default function Account() {
           </div>
           <div className="modal-footer">
             <button className="modal-btn-secondary" onClick={() => setShowOrderDetail(false)}>Close</button>
-            <button className="modal-btn-primary" onClick={() => { setShowOrderDetail(false); navigate(`/track-order?order=${selectedOrder.id}`); }}>
+            <button className="modal-btn-primary" onClick={() => { setShowOrderDetail(false); navigate(`/track-order?order=${encodeURIComponent(selectedOrder.id)}`); }}> 
               <i className="bi bi-truck me-1" />Track Package
             </button>
           </div>

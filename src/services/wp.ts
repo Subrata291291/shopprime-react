@@ -8,12 +8,24 @@ const wpApi = axios.create({
   timeout: 15000,
 });
 
+const headlessApi = axios.create({
+  baseURL: config.wpUrl ? `${config.wpUrl}/wp-json/zyra/v1` : '',
+  timeout: 15000,
+});
+
 const storeApi = axios.create({
   baseURL: '/zyra-api',
   timeout: 15000,
 });
 
 wpApi.interceptors.request.use((req) => {
+  if (config.jwtToken) {
+    req.headers.Authorization = `Bearer ${config.jwtToken}`;
+  }
+  return req;
+});
+
+headlessApi.interceptors.request.use((req) => {
   if (config.jwtToken) {
     req.headers.Authorization = `Bearer ${config.jwtToken}`;
   }
@@ -307,8 +319,9 @@ export const wpService = {
     if (!isWpConfigured()) {
       return [];
     }
-    const { data } = await wpApi.get('/wc/v3/orders', { params: { per_page: 50 } });
-    return data.map((o: any) => ({
+    const { data } = await headlessApi.get('/orders');
+    const orders = Array.isArray(data) ? data : [];
+    return orders.map((o: any) => ({
       id: o.number ? `#${o.number}` : o.id,
       date: new Date(o.date_created).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
       total: parseFloat(o.total),
@@ -337,7 +350,7 @@ export const wpService = {
       return mockOrders.find((o) => o.id === orderId) || null;
     }
     const id = orderId.replace('#', '');
-    const { data } = await wpApi.get(`/wc/v3/orders/${id}`);
+    const { data } = await headlessApi.get(`/orders/${id}`);
     return {
       id: data.number ? `#${data.number}` : data.id,
       date: new Date(data.date_created).toLocaleDateString(),
@@ -366,35 +379,32 @@ export const wpService = {
       return { id: `SP-${Math.floor(100000 + Math.random() * 900000)}`, ...orderData };
     }
 
-    // Try creating the order via WooCommerce; if it fails, fall back to a mock order
-    try {
-      const { data } = await wpApi.post('/wc/v3/orders', {
-        payment_method: 'stripe',
-        payment_method_title: 'Credit Card',
-        set_paid: false,
-        billing: {
-          first_name: String(orderData.shippingAddress?.name || 'Guest').split(' ')[0] || 'Guest',
-          last_name: String(orderData.shippingAddress?.name || 'User').split(' ').slice(1).join(' ') || 'User',
-          email: String(orderData.email || 'guest@example.com'),
-        },
-        shipping: {
-          first_name: String(orderData.shippingAddress?.name || 'Guest').split(' ')[0] || 'Guest',
-          last_name: String(orderData.shippingAddress?.name || 'User').split(' ').slice(1).join(' ') || 'User',
-          address_1: String(orderData.shippingAddress?.address || ''),
-          city: String(orderData.shippingAddress?.city || ''),
-        },
-        line_items: orderData.items?.map((item: any) => ({
-          product_id: item.product.id,
-          quantity: item.quantity,
-        })) || [],
-      });
-
-      return { id: data.number ? `#${data.number}` : data.id, ...orderData };
-    } catch (err: any) {
-      // Log the error for debugging but return a mock order so the checkout flow doesn't fail
-      console.warn('[WP ORDER CREATE] falling back to mock order:', err?.response?.status ?? err);
-      return { id: `SP-${Math.floor(100000 + Math.random() * 900000)}`, ...orderData };
-    }
+    const fullName = String(orderData.shippingAddress?.name || 'Guest User').trim().split(/\s+/);
+    const address = orderData.shippingAddress || {};
+    const billing = {
+      first_name: fullName[0] || 'Guest',
+      last_name: fullName.slice(1).join(' ') || 'User',
+      email: String(orderData.email || 'guest@example.com'),
+      phone: String(orderData.phone || ''),
+      address_1: String(address.address || ''),
+      city: String(address.city || ''),
+      country: String(address.countryCode || 'IN'),
+      state: String(address.state || ''),
+      postcode: String(address.postcode || ''),
+    };
+    const { data } = await headlessApi.post('/orders', {
+      billing,
+      shipping: billing,
+      payment_method: 'cod',
+      payment_method_title: orderData.paymentMethod || 'Pending payment',
+      items: orderData.items?.map((item: any) => ({
+        product_id: item.product.id,
+        quantity: item.quantity,
+        selectedColor: item.selectedColor,
+        selectedSize: item.selectedSize,
+      })) || [],
+    });
+    return { id: data.number ? `#${data.number}` : data.id, ...orderData };
   },
 
   // ─── Auth / Customer ────────────────────────────────────────────────
@@ -402,48 +412,26 @@ export const wpService = {
     if (!isWpConfigured()) {
       return { token: 'mock-token', user: { ...mockUser, name: username, email } };
     }
-    try {
-      const { data } = await wpApi.post('/wp/v2/users/register', { username, email, password });
-      return { token: data.token || '', user: data.user || { name: username, email } };
-    } catch {
-      try {
-        const { data } = await wpApi.post('/wp/v2/users', { username, email, password });
-        return { token: '', user: { id: data.id, name: data.name, email: data.email } };
-      } catch {
-        return null;
-      }
-    }
+    const { data } = await headlessApi.post('/auth/register', { username, email, password });
+    config.jwtToken = data.token || '';
+    return data;
   },
 
   async login(username: string, password: string): Promise<{ token: string; user: any } | null> {
     if (!isWpConfigured()) {
       return { token: 'mock-token', user: mockUser };
     }
-    try {
-      const { data } = await wpApi.post('/jwt-auth/v1/token', { username, password });
-      config.jwtToken = data.token;
-      return { token: data.token, user: data.user };
-    } catch {
-      return null;
-    }
+    const { data } = await headlessApi.post('/auth/login', { username, password });
+    config.jwtToken = data.token || '';
+    return data;
   },
 
   async getCurrentUser(): Promise<any> {
     if (!isWpConfigured()) {
       return mockUser;
     }
-    try {
-      const { data } = await wpApi.get('/wc/v3/customers/me');
-      return {
-        id: data.id,
-        name: `${data.first_name} ${data.last_name}`.trim() || data.username,
-        email: data.email,
-        avatar: data.avatar_url || '',
-      };
-    } catch {
-      const { data } = await wpApi.get('/wp/v2/users/me');
-      return { id: data.id, name: data.name, email: data.email, avatar: data.avatar_urls?.['96'] || '' };
-    }
+    const { data } = await headlessApi.get('/auth/me');
+    return data.user;
   },
 
   // ─── Customer Data ──────────────────────────────────────────────────
@@ -452,11 +440,15 @@ export const wpService = {
       return mockAddresses;
     }
     try {
-      const { data } = await wpApi.get('/wc/v3/customers/me');
+      const { data } = await headlessApi.get('/customer/address');
+      const customer = data.billing || {};
+      data.shipping = data.shipping || {};
+      data.shipping.phone = data.shipping.phone || customer.phone || '';
+      data.shipping.email = data.shipping.email || customer.email || '';
       const shipping = data.shipping;
       if (shipping?.address_1) {
         return [{
-          id: 1, name: `${data.first_name} ${data.last_name}`.trim(),
+          id: 1, name: `${shipping.first_name || customer.first_name || ''} ${shipping.last_name || customer.last_name || ''}`.trim(),
           tags: shipping.address_2 ? ['Default', 'Home'] : ['Default'],
           line1: shipping.address_1,
           line2: shipping.address_2 || shipping.city || '',

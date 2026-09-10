@@ -27,8 +27,8 @@ export default function Auth() {
       setError(mode === 'login' ? 'Please enter your username.' : 'Please choose a username.');
       return;
     }
-    if (!password.trim() || password.length < 3) {
-      setError('Password must be at least 3 characters.');
+    if (!password.trim() || password.length < 8) {
+      setError('Password must be at least 8 characters.');
       return;
     }
     if (mode === 'register') {
@@ -36,8 +36,8 @@ export default function Auth() {
         setError('Please enter a valid email address.');
         return;
       }
-      if (password.length < 6) {
-        setError('Password must be at least 6 characters for registration.');
+      if (password.length < 8) {
+        setError('Password must be at least 8 characters for registration.');
         return;
       }
     }
@@ -129,7 +129,7 @@ export default function Auth() {
                 <i className="bi bi-lock auth-input-icon"></i>
                 <input
                   type={showPassword ? 'text' : 'password'}
-                  placeholder={mode === 'login' ? 'Password' : 'Create a password (min 6 chars)'}
+                  placeholder={mode === 'login' ? 'Password' : 'Create a password (min 8 chars)'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   autoComplete={mode === 'login' ? 'current-password' : 'new-password'}

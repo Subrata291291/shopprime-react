@@ -4,8 +4,8 @@ const isPlaceholderValue = (value: string): boolean => {
 };
 
 const config = {
-  wpUrl: 'https://zyraluxe.in/',
-  jwtToken: '',
+  wpUrl: (import.meta.env.VITE_WP_URL || 'https://zyraluxe.in').replace(/\/$/, ''),
+  jwtToken: localStorage.getItem('shopprime_token') || '',
 };
 
 export const isWpConfigured = (): boolean => {

@@ -105,7 +105,7 @@ export default function TrackOrder() {
           <div>
             <h1>Track Your Order</h1>
             <div className="to-order-meta">
-              <span className="to-order-id-badge">Order ID: #{order.id}</span>
+              <span className="to-order-id-badge">Order ID: {String(order.id).startsWith('#') ? order.id : `#${order.id}`}</span>
               <span className="to-order-date">Order Date: {order.date}</span>
             </div>
           </div>

@@ -9,6 +9,16 @@ interface CartState {
 
 const initialState: CartState = { items: [] };
 
+function getInitialState(): CartState {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    const items = saved ? JSON.parse(saved) : [];
+    return Array.isArray(items) ? { items } : initialState;
+  } catch {
+    return initialState;
+  }
+}
+
 // ─── Actions ──────────────────────────────────────────────────────────────────
 type CartAction =
   | { type: 'ADD_ITEM'; payload: { product: Product; quantity?: number; color?: string; size?: string } }
@@ -76,17 +86,7 @@ const CartContext = createContext<CartContextValue | null>(null);
 const STORAGE_KEY = 'shopprime_cart';
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
-  const [state, dispatch] = useReducer(cartReducer, initialState);
-
-  // Load from localStorage on mount
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) dispatch({ type: 'LOAD', payload: JSON.parse(saved) });
-    } catch {
-      // ignore parse errors
-    }
-  }, []);
+  const [state, dispatch] = useReducer(cartReducer, initialState, getInitialState);
 
   // Persist to localStorage whenever cart changes
   useEffect(() => {

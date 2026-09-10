@@ -132,7 +132,7 @@ export default function ThankYou() {
             </div>
             <h1>Order Placed Successfully!</h1>
             <p>Thank you for your purchase. We've sent a confirmation email to your inbox.</p>
-            <span className="ty-order-id-badge">Order ID: #{order.id}</span>
+            <span className="ty-order-id-badge">Order ID: {String(order.id).startsWith('#') ? order.id : `#${order.id}`}</span>
           </div>
 
           <div className="ty-grid">
@@ -246,7 +246,7 @@ export default function ThankYou() {
               </div>
 
               <div className="d-flex flex-column gap-3">
-                <Link to={`/track-order?order=${order.id}`} className="ty-btn-track" id="trackOrderBtn">
+                <Link to={`/track-order?order=${encodeURIComponent(order.id)}`} className="ty-btn-track" id="trackOrderBtn">
                   Track Order <i className="bi bi-arrow-right"></i>
                 </Link>
                 <Link to="/shop" className="ty-btn-shop">

@@ -17,6 +17,11 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 const USER_KEY = 'shopprime_user';
 const TOKEN_KEY = 'shopprime_token';
 
+function errorMessage(error: unknown, fallback: string): string {
+  const responseMessage = (error as { response?: { data?: { message?: string } } })?.response?.data?.message;
+  return responseMessage || (error instanceof Error ? error.message : fallback);
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(() => {
     try {
@@ -41,8 +46,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       toast.error('Login failed. Please check your credentials.');
       return false;
-    } catch {
-      toast.error('Login failed. Please try again later.');
+    } catch (error) {
+      toast.error(errorMessage(error, 'Login failed. Please try again later.'));
       return false;
     } finally {
       setLoading(false);
@@ -62,8 +67,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
       toast.error('Registration failed. Please try again.');
       return false;
-    } catch {
-      toast.error('Registration failed. Please try again later.');
+    } catch (error) {
+      toast.error(errorMessage(error, 'Registration failed. Please try again later.'));
       return false;
     } finally {
       setLoading(false);

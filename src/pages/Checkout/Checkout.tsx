@@ -359,8 +359,8 @@ export default function Checkout() {
     setSubmitting(true);
     setSubmitError('');
     const name = data.firstName && data.lastName ? `${data.firstName} ${data.lastName}` : user?.name || 'Guest User';
-    const orderAddress = selectedAddress ? `${selectedAddress.line1}, ${selectedAddress.line2}` : 'Default Address';
-    const orderCity = selectedAddress ? selectedAddress.line2 : 'City';
+    const orderAddress = selectedAddress ? selectedAddress.line1 : data.address || 'Default Address';
+    const orderCity = selectedAddress ? selectedAddress.line2 : data.city || 'City';
     const orderEmail = user?.email || data.email;
     const orderPhone = selectedAddress?.phone || data.phone || '';
     const paymentMethodLabel = data.paymentMethod || (paymentMethod === 'card' ? 'Credit / Debit Card' : paymentMethod === 'upi' ? 'UPI / Wallet' : 'Net Banking');
@@ -377,6 +377,7 @@ export default function Checkout() {
         name,
         address: orderAddress,
         city: orderCity,
+        postcode: selectedAddress ? '' : data.postalCode || '',
         country: selectedAddress?.country || 'United States',
       },
       total: data.total,
