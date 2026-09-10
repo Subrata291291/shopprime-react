@@ -757,7 +757,7 @@ export default function Account() {
           </div>
           <div className="modal-footer">
             <button className="modal-btn-secondary" onClick={() => setShowOrderDetail(false)}>Close</button>
-            <button className="modal-btn-primary" onClick={() => { setShowOrderDetail(false); navigate(`/track-order?order=${encodeURIComponent(selectedOrder.id)}`); }}> 
+            <button className="modal-btn-primary" onClick={() => { setShowOrderDetail(false); navigate(`/track-order?order=${encodeURIComponent(selectedOrder.id)}`); }}>
               <i className="bi bi-truck me-1" />Track Package
             </button>
           </div>
