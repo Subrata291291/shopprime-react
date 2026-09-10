@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Zyra Luxe Headless API
  * Description: Headless authentication, customer data, WooCommerce checkout, and booking/order endpoints for the Zyra Luxe React storefront.
- * Version: 1.0.4
+ * Version: 1.0.5
  * Author: Zyra Luxe
  * Requires at least: 6.4
  * Requires PHP: 7.4
@@ -294,9 +294,6 @@ final class Zyra_Luxe_Headless_API {
 
         $order = wc_create_order();
         if (is_wp_error($order)) return self::error($order->get_error_message(), 500);
-        $user = self::user_from_token();
-        if ($user) $order->set_customer_id($user->ID);
-
         foreach ($items as $item) {
             $product_id = absint($item['product_id'] ?? $item['productId'] ?? 0);
             $quantity = max(1, absint($item['quantity'] ?? $item['qty'] ?? 1));
@@ -398,15 +395,31 @@ final class Zyra_Luxe_Headless_API {
 
     public static function orders() {
         $user = self::user_from_token();
-        $orders = wc_get_orders(['customer_id' => $user->ID, 'limit' => 50, 'orderby' => 'date', 'order' => 'DESC']);
+        $orders = self::orders_for_user($user);
         return array_map([__CLASS__, 'order_response'], $orders);
     }
 
     public static function order(WP_REST_Request $request) {
         $user = self::user_from_token();
         $order = wc_get_order(absint($request['id']));
-        if (!$order || (int) $order->get_customer_id() !== (int) $user->ID) return self::error('Order not found.', 404);
+        if (!$order || !self::order_belongs_to_user($order, $user)) return self::error('Order not found.', 404);
         return self::order_response($order);
+    }
+
+    private static function orders_for_user(WP_User $user): array {
+        $orders = wc_get_orders(['customer_id' => $user->ID, 'limit' => 50, 'orderby' => 'date', 'order' => 'DESC']);
+        $email_orders = wc_get_orders(['billing_email' => $user->user_email, 'limit' => 50, 'orderby' => 'date', 'order' => 'DESC']);
+        $orders_by_id = [];
+        foreach (array_merge($orders, $email_orders) as $order) {
+            $orders_by_id[$order->get_id()] = $order;
+        }
+        usort($orders_by_id, static fn(WC_Order $left, WC_Order $right): int => $right->get_date_created()->getTimestamp() <=> $left->get_date_created()->getTimestamp());
+        return array_slice($orders_by_id, 0, 50);
+    }
+
+    private static function order_belongs_to_user(WC_Order $order, WP_User $user): bool {
+        return (int) $order->get_customer_id() === (int) $user->ID
+            || strtolower((string) $order->get_billing_email()) === strtolower((string) $user->user_email);
     }
 
     public static function get_address() {
