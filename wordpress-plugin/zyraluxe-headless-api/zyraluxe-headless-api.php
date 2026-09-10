@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Zyra Luxe Headless API
  * Description: Headless authentication, customer data, WooCommerce checkout, and booking/order endpoints for the Zyra Luxe React storefront.
- * Version: 1.0.3
+ * Version: 1.0.4
  * Author: Zyra Luxe
  * Requires at least: 6.4
  * Requires PHP: 7.4
@@ -16,9 +16,16 @@ final class Zyra_Luxe_Headless_API {
 
     public static function boot(): void {
         add_action('init', [__CLASS__, 'handle_preflight'], 0);
+        add_action('send_headers', [__CLASS__, 'send_cors_headers_early'], 0);
         add_action('rest_api_init', [__CLASS__, 'register_routes']);
         add_filter('rest_pre_serve_request', [__CLASS__, 'cors_headers'], 10, 4);
         add_action('woocommerce_admin_order_data_after_order_details', [__CLASS__, 'render_admin_order_details']);
+    }
+
+    public static function send_cors_headers_early(): void {
+        if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'OPTIONS') return;
+
+        self::add_cors_headers();
     }
 
     public static function handle_preflight(): void {
@@ -106,6 +113,12 @@ final class Zyra_Luxe_Headless_API {
     }
 
     public static function cors_headers($served, $result, $request, $server) {
+        self::add_cors_headers();
+
+        return $served;
+    }
+
+    private static function add_cors_headers(): void {
         $origin = isset($_SERVER['HTTP_ORIGIN']) ? esc_url_raw(wp_unslash($_SERVER['HTTP_ORIGIN'])) : '';
         $allowed = apply_filters('zyra_headless_allowed_origins', [
             'http://localhost:5173',
@@ -122,8 +135,6 @@ final class Zyra_Luxe_Headless_API {
             header('Access-Control-Allow-Methods: GET, POST, PUT, PATCH, OPTIONS');
             header('Vary: Origin', false);
         }
-
-        return $served;
     }
 
     private static function error(string $message, int $status = 400): WP_Error {

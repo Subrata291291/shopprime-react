@@ -2,7 +2,7 @@
 
 This plugin provides the API used by the React storefront.
 
-React-created orders appear in **WooCommerce > Orders** with normal WooCommerce line items, customer billing/shipping details, order notes, and a Zyra Luxe React order panel. Existing orders are unchanged; install plugin version `1.0.3` before testing a new checkout. The selected carrier is saved as a WooCommerce shipping line, and the payment method is saved as Razorpay. This version also handles authenticated CORS preflight requests.
+React-created orders appear in **WooCommerce > Orders** with normal WooCommerce line items, customer billing/shipping details, order notes, and a Zyra Luxe React order panel. Existing orders are unchanged; install plugin version `1.0.4` before testing a new checkout. The selected carrier is saved as a WooCommerce shipping line, and the payment method is saved as Razorpay. This version also handles authenticated CORS preflight requests.
 
 ## Install
 
