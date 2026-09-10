@@ -113,6 +113,16 @@ export const api = {
     return delay(newOrder);
   },
 
+  createRazorpayOrder: async (orderId: number, paymentToken: string) => {
+    if (!isWpConfigured()) throw new Error('Razorpay is unavailable in mock mode.');
+    return wpService.createRazorpayOrder(orderId, paymentToken);
+  },
+
+  verifyRazorpayPayment: async (orderId: number, paymentToken: string, payment: any) => {
+    if (!isWpConfigured()) throw new Error('Razorpay is unavailable in mock mode.');
+    return wpService.verifyRazorpayPayment(orderId, paymentToken, payment);
+  },
+
   // ─── Customer Data ──────────────────────────────────────────────────
   getWishlist: async (): Promise<WishlistItem[]> => {
     if (isWpConfigured()) return wpService.getWishlist();

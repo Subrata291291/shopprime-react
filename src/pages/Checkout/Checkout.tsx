@@ -6,6 +6,31 @@ import { api } from '../../services/api';
 import OrderItemCard from '../../components/ui/OrderItemCard';
 import type { Address } from '../../services/api';
 
+declare global {
+  interface Window {
+    Razorpay?: new (options: Record<string, unknown>) => { open: () => void };
+  }
+}
+
+const loadRazorpayCheckout = (): Promise<void> => new Promise((resolve, reject) => {
+  if (window.Razorpay) {
+    resolve();
+    return;
+  }
+  const existingScript = document.getElementById('razorpay-checkout') as HTMLScriptElement | null;
+  if (existingScript) {
+    existingScript.addEventListener('load', () => resolve(), { once: true });
+    existingScript.addEventListener('error', () => reject(new Error('Razorpay failed to load.')), { once: true });
+    return;
+  }
+  const script = document.createElement('script');
+  script.id = 'razorpay-checkout';
+  script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+  script.onload = () => resolve();
+  script.onerror = () => reject(new Error('Razorpay failed to load.'));
+  document.head.appendChild(script);
+});
+
 type CheckoutMode = 'guest' | 'logged-in';
 type ShippingMethod = 'xpressbees_surface' | 'xpressbees_air' | 'delhivery_surface' | 'delhivery_air' | 'blue_dart_air';
 
@@ -397,10 +422,33 @@ export default function Checkout() {
       };
 
       if (result.paymentUrl && paymentMethodLabel === 'Razorpay') {
-        // The gateway returns to this origin after it confirms the payment.
         window.sessionStorage.setItem('shopprime_last_order', JSON.stringify(orderData));
-        clearCart();
-        window.location.assign(result.paymentUrl);
+        if (!result.paymentOrderId || !result.paymentToken) {
+          throw new Error('Razorpay payment details are unavailable.');
+        }
+        const razorpayOrder = await api.createRazorpayOrder(result.paymentOrderId, result.paymentToken);
+        await loadRazorpayCheckout();
+        if (!window.Razorpay) throw new Error('Razorpay failed to load.');
+        const razorpay = new window.Razorpay({
+          key: razorpayOrder.key,
+          amount: razorpayOrder.amount,
+          currency: razorpayOrder.currency,
+          name: razorpayOrder.name,
+          description: razorpayOrder.description,
+          order_id: razorpayOrder.order_id,
+          prefill: razorpayOrder.prefill,
+          theme: { color: '#4d7fff' },
+          handler: async (payment: any) => {
+            try {
+              await api.verifyRazorpayPayment(result.paymentOrderId, result.paymentToken, payment);
+              clearCart();
+              navigate('/thank-you', { state: { order: orderData } });
+            } catch {
+              setSubmitError('Payment could not be verified. Please contact support before retrying.');
+            }
+          },
+        });
+        razorpay.open();
         return;
       }
       window.sessionStorage.setItem('shopprime_last_order', JSON.stringify(orderData));

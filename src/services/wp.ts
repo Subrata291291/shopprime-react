@@ -408,9 +408,30 @@ export const wpService = {
     });
     return {
       id: data.number ? `#${data.number}` : data.id,
+      paymentOrderId: data.id,
+      paymentToken: data.payment_token || '',
       paymentUrl: data.payment_url || '',
       ...orderData,
     };
+  },
+
+  async createRazorpayOrder(orderId: number, paymentToken: string): Promise<any> {
+    const { data } = await headlessApi.post('/payments/razorpay/order', {
+      order_id: orderId,
+      payment_token: paymentToken,
+    });
+    return data;
+  },
+
+  async verifyRazorpayPayment(orderId: number, paymentToken: string, payment: any): Promise<any> {
+    const { data } = await headlessApi.post('/payments/razorpay/verify', {
+      order_id: orderId,
+      payment_token: paymentToken,
+      razorpay_order_id: payment.razorpay_order_id,
+      razorpay_payment_id: payment.razorpay_payment_id,
+      razorpay_signature: payment.razorpay_signature,
+    });
+    return data;
   },
 
   // ─── Auth / Customer ────────────────────────────────────────────────

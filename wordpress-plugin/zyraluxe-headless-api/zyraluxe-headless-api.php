@@ -92,6 +92,16 @@ final class Zyra_Luxe_Headless_API {
             'callback' => [__CLASS__, 'orders'],
             'permission_callback' => [__CLASS__, 'require_user'],
         ]);
+        register_rest_route(self::NAMESPACE, '/payments/razorpay/order', [
+            'methods' => WP_REST_Server::CREATABLE,
+            'callback' => [__CLASS__, 'create_razorpay_order'],
+            'permission_callback' => '__return_true',
+        ]);
+        register_rest_route(self::NAMESPACE, '/payments/razorpay/verify', [
+            'methods' => WP_REST_Server::CREATABLE,
+            'callback' => [__CLASS__, 'verify_razorpay_payment'],
+            'permission_callback' => '__return_true',
+        ]);
         register_rest_route(self::NAMESPACE, '/orders/(?P<id>\d+)', [
             'methods' => WP_REST_Server::READABLE,
             'callback' => [__CLASS__, 'order'],
@@ -368,6 +378,7 @@ final class Zyra_Luxe_Headless_API {
         $order->add_item($shipping_item);
         $order->calculate_totals();
         $order->update_meta_data('_zyra_headless_source', 'react');
+        $order->update_meta_data('_zyra_headless_payment_token', wp_generate_password(48, false, false));
         $storefront_url = self::storefront_url($body['storefront_url'] ?? '');
         if ($storefront_url) $order->update_meta_data('_zyra_headless_storefront_url', $storefront_url);
         $order->add_order_note('Order created by the Zyra Luxe React storefront.');
@@ -387,7 +398,7 @@ final class Zyra_Luxe_Headless_API {
     public static function create_order(WP_REST_Request $request) {
         $order = self::make_order(self::body($request));
         if (is_wp_error($order)) return $order;
-        return new WP_REST_Response(self::order_response($order), 201);
+        return new WP_REST_Response(self::order_response($order, true), 201);
     }
 
     public static function create_booking(WP_REST_Request $request) {
@@ -396,7 +407,7 @@ final class Zyra_Luxe_Headless_API {
         return new WP_REST_Response(self::order_response($order), 201);
     }
 
-    private static function order_response(WC_Order $order): array {
+    private static function order_response(WC_Order $order, bool $include_payment_token = false): array {
         $line_items = [];
         foreach ($order->get_items() as $item) {
             $product = $item->get_product();
@@ -412,7 +423,7 @@ final class Zyra_Luxe_Headless_API {
             ];
         }
 
-        return [
+        $response = [
             'id' => $order->get_id(),
             'number' => $order->get_order_number(),
             'status' => $order->get_status(),
@@ -425,6 +436,86 @@ final class Zyra_Luxe_Headless_API {
             'currency' => $order->get_currency(),
             'payment_url' => $order->get_checkout_payment_url(),
         ];
+        if ($include_payment_token) $response['payment_token'] = $order->get_meta('_zyra_headless_payment_token');
+        return $response;
+    }
+
+    private static function payment_order(WP_REST_Request $request) {
+        $body = self::body($request);
+        $order = wc_get_order(absint($body['order_id'] ?? 0));
+        $token = (string) ($body['payment_token'] ?? '');
+        if (!$order || !$token || !hash_equals((string) $order->get_meta('_zyra_headless_payment_token'), $token)) {
+            return self::error('Invalid payment order.', 403);
+        }
+        return [$order, $body];
+    }
+
+    private static function razorpay_credentials(): array {
+        $settings = get_option('woocommerce_razorpay_settings', []);
+        $credentials = [
+            'key_id' => is_array($settings) ? ($settings['key_id'] ?? $settings['key'] ?? '') : '',
+            'key_secret' => is_array($settings) ? ($settings['key_secret'] ?? $settings['secret'] ?? '') : '',
+        ];
+        return apply_filters('zyra_headless_razorpay_credentials', $credentials);
+    }
+
+    public static function create_razorpay_order(WP_REST_Request $request) {
+        $payment_order = self::payment_order($request);
+        if (is_wp_error($payment_order)) return $payment_order;
+        [$order] = $payment_order;
+        $credentials = self::razorpay_credentials();
+        $key_id = (string) ($credentials['key_id'] ?? '');
+        $key_secret = (string) ($credentials['key_secret'] ?? '');
+        if (!$key_id || !$key_secret) return self::error('Razorpay credentials are not configured.', 503);
+
+        $amount = (int) round(((float) $order->get_total()) * 100);
+        $response = wp_remote_post('https://api.razorpay.com/v1/orders', [
+            'timeout' => 30,
+            'headers' => ['Authorization' => 'Basic ' . base64_encode($key_id . ':' . $key_secret)],
+            'body' => [
+                'amount' => $amount,
+                'currency' => $order->get_currency(),
+                'receipt' => 'wc-' . $order->get_id(),
+                'notes[woocommerce_order_id]' => (string) $order->get_id(),
+            ],
+        ]);
+        if (is_wp_error($response)) return self::error('Could not create the Razorpay order.', 502);
+        $data = json_decode(wp_remote_retrieve_body($response), true);
+        if (wp_remote_retrieve_response_code($response) >= 300 || empty($data['id'])) {
+            return self::error((string) ($data['error']['description'] ?? 'Could not create the Razorpay order.'), 502);
+        }
+        $order->update_meta_data('_zyra_razorpay_order_id', sanitize_text_field($data['id']));
+        $order->save();
+        return [
+            'key' => $key_id,
+            'order_id' => $data['id'],
+            'amount' => (int) $data['amount'],
+            'currency' => $data['currency'],
+            'name' => get_bloginfo('name'),
+            'description' => 'Order #' . $order->get_order_number(),
+            'prefill' => [
+                'name' => trim($order->get_billing_first_name() . ' ' . $order->get_billing_last_name()),
+                'email' => $order->get_billing_email(),
+                'contact' => $order->get_billing_phone(),
+            ],
+        ];
+    }
+
+    public static function verify_razorpay_payment(WP_REST_Request $request) {
+        $payment_order = self::payment_order($request);
+        if (is_wp_error($payment_order)) return $payment_order;
+        [$order, $body] = $payment_order;
+        $credentials = self::razorpay_credentials();
+        $razorpay_order_id = sanitize_text_field((string) ($body['razorpay_order_id'] ?? ''));
+        $payment_id = sanitize_text_field((string) ($body['razorpay_payment_id'] ?? ''));
+        $signature = sanitize_text_field((string) ($body['razorpay_signature'] ?? ''));
+        $expected_order_id = (string) $order->get_meta('_zyra_razorpay_order_id');
+        $expected_signature = hash_hmac('sha256', $razorpay_order_id . '|' . $payment_id, (string) ($credentials['key_secret'] ?? ''));
+        if (!$payment_id || $razorpay_order_id !== $expected_order_id || !hash_equals($expected_signature, $signature)) {
+            return self::error('Razorpay payment verification failed.', 400);
+        }
+        if (!$order->is_paid()) $order->payment_complete($payment_id);
+        return ['success' => true, 'order_id' => $order->get_id(), 'status' => $order->get_status()];
     }
 
     public static function orders() {
