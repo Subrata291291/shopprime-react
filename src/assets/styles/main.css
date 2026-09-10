@@ -1026,26 +1026,26 @@ header {
 }
 
 .cart-page {
-  padding-top: 4.4rem;
-  padding-bottom: 6rem;
+  padding-top: 3.2rem;
+  padding-bottom: 4.8rem;
 }
 
 .cart-header-block {
-  margin-bottom: 2.4rem;
+  margin-bottom: 1.8rem;
 }
 
 .cart-header-block h1 {
   margin: 0;
-  font-size: 4rem;
+  font-size: 3.2rem;
   font-weight: 700;
-  letter-spacing: 0.04em;
+  letter-spacing: 0;
   text-transform: uppercase;
 }
 
 .cart-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1.85fr) minmax(28rem, 0.8fr);
-  gap: 2.2rem;
+  grid-template-columns: minmax(0, 1.7fr) minmax(29rem, 0.7fr);
+  gap: 3.2rem;
   align-items: start;
 }
 
@@ -1057,9 +1057,9 @@ header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 1rem 0 1.4rem;
+  padding: 0.8rem 0 1.1rem;
   border-bottom: 1px solid var(--line);
-  font-size: 1.5rem;
+  font-size: 1.2rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -1068,23 +1068,23 @@ header {
 
 .cart-items {
   display: grid;
-  gap: 1.8rem;
-  margin-top: 1.8rem;
+  gap: 1.2rem;
+  margin-top: 1.2rem;
 }
 
 .cart-item-card {
   display: grid;
-  grid-template-columns: 11rem minmax(0, 1fr) 9rem;
-  gap: 1.8rem;
+  grid-template-columns: 9rem minmax(0, 1fr) 8rem;
+  gap: 1.4rem;
   align-items: center;
-  padding: 1.6rem 0;
+  padding: 1.2rem 0;
   border-bottom: 1px solid var(--line);
   background: transparent;
 }
 
 .cart-item-image-wrap {
   width: 100%;
-  max-width: 11rem;
+  max-width: 9rem;
   aspect-ratio: 1;
   border-radius: 0.8rem;
   overflow: hidden;
@@ -1101,19 +1101,19 @@ header {
 .cart-item-main {
   display: flex;
   flex-direction: column;
-  gap: 1.2rem;
+  gap: 0.9rem;
   min-width: 0;
 }
 
 .cart-item-copy {
   display: flex;
   flex-direction: column;
-  gap: 0.8rem;
+  gap: 0.5rem;
 }
 
 .cart-item-copy h3 {
   margin: 0;
-  font-size: 1.8rem;
+  font-size: 1.5rem;
   line-height: 1.3;
   font-weight: 700;
   color: var(--text);
@@ -1123,13 +1123,13 @@ header {
 .cart-item-meta {
   display: flex;
   align-items: center;
-  gap: 1.8rem;
+  gap: 1.2rem;
   flex-wrap: wrap;
 }
 
 .cart-item-price,
 .cart-item-qty-label {
-  font-size: 1.4rem;
+  font-size: 1.25rem;
   letter-spacing: 0.04em;
   color: #dce5f3;
 }
@@ -1188,21 +1188,21 @@ header {
   display: flex;
   justify-content: flex-end;
   color: var(--text);
-  font-size: 1.8rem;
+  font-size: 1.6rem;
   font-weight: 700;
 }
 
 .order-summary-card {
-  background: transparent;
-  border: 1px solid var(--line);
-  border-radius: 0;
-  padding: 0;
+  background: #171b22;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.8rem;
+  padding: 2rem;
   box-shadow: none;
 }
 
 .order-summary-card h2 {
-  margin: 0 0 2rem;
-  font-size: 2.8rem;
+  margin: 0 0 1.4rem;
+  font-size: 2.2rem;
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -1211,8 +1211,8 @@ header {
 
 .summary-lines {
   display: grid;
-  gap: 1.6rem;
-  padding: 0 0 1.8rem;
+  gap: 1.2rem;
+  padding: 0 0 1.4rem;
   border-bottom: 1px solid var(--line);
 }
 
@@ -1222,11 +1222,11 @@ header {
   justify-content: space-between;
   gap: 1.2rem;
   color: #bdc8d8;
-  font-size: 1.5rem;
+  font-size: 1.35rem;
 }
 
 .summary-row strong {
-  font-size: 1.6rem;
+  font-size: 1.4rem;
   font-weight: 700;
   color: var(--text);
 }
@@ -1238,7 +1238,7 @@ header {
 
 .shipping-note {
   display: block;
-  font-size: 1.2rem;
+  font-size: 1.15rem;
   color: #9eacbd;
   line-height: 1.5;
   font-style: normal;
@@ -1249,21 +1249,21 @@ header {
   align-items: center;
   justify-content: space-between;
   gap: 1.2rem;
-  padding: 1.8rem 0;
+  padding: 1.5rem 0;
   border-bottom: 1px solid var(--line);
   color: var(--text);
 }
 
 .summary-total span {
   display: block;
-  font-size: 1.6rem;
+  font-size: 1.35rem;
   font-weight: 600;
   text-transform: uppercase;
 }
 
 .summary-total strong {
   color: var(--text);
-  font-size: 2.4rem;
+  font-size: 2.2rem;
   font-weight: 700;
 }
 
@@ -1291,12 +1291,12 @@ header {
 .summary-btn-primary {
   display: block;
   width: 100%;
-  margin-top: 2rem;
-  padding: 1.7rem 1.4rem;
+  margin-top: 1.6rem;
+  padding: 1.35rem 1.2rem;
   border-radius: 0.6rem;
   background: #0d0d0d;
   color: #f5d76b;
-  font-size: 1.7rem;
+  font-size: 1.35rem;
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -1306,6 +1306,11 @@ header {
 
 .summary-btn-primary:hover {
   color: #f5d76b;
+}
+
+.cart-page > .content-section {
+  margin-top: 3.5rem;
+  margin-bottom: 0;
 }
 
 .summary-secure,
