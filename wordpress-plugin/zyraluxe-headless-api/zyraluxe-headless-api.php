@@ -2,7 +2,7 @@
 /**
  * Plugin Name: Zyra Luxe Headless API
  * Description: Headless authentication, customer data, WooCommerce checkout, and booking/order endpoints for the Zyra Luxe React storefront.
- * Version: 1.0.5
+ * Version: 1.0.6
  * Author: Zyra Luxe
  * Requires at least: 6.4
  * Requires PHP: 7.4
@@ -19,6 +19,8 @@ final class Zyra_Luxe_Headless_API {
         add_action('send_headers', [__CLASS__, 'send_cors_headers_early'], 0);
         add_action('rest_api_init', [__CLASS__, 'register_routes']);
         add_filter('rest_pre_serve_request', [__CLASS__, 'cors_headers'], 10, 4);
+        add_filter('woocommerce_get_return_url', [__CLASS__, 'return_to_storefront'], 99, 2);
+        add_filter('allowed_redirect_hosts', [__CLASS__, 'allow_storefront_redirect_hosts']);
         add_action('woocommerce_admin_order_data_after_order_details', [__CLASS__, 'render_admin_order_details']);
     }
 
@@ -135,6 +137,36 @@ final class Zyra_Luxe_Headless_API {
             header('Access-Control-Allow-Methods: GET, POST, PUT, PATCH, OPTIONS');
             header('Vary: Origin', false);
         }
+    }
+
+    private static function allowed_origins(): array {
+        return apply_filters('zyra_headless_allowed_origins', [
+            'http://localhost:5173',
+            'http://localhost:4173',
+            'http://127.0.0.1:5173',
+            'http://127.0.0.1:4173',
+            'https://shopprime-react.netlify.app',
+        ]);
+    }
+
+    private static function storefront_url($value): string {
+        $origin = rtrim(esc_url_raw((string) $value), '/');
+        return in_array($origin, self::allowed_origins(), true) ? $origin : '';
+    }
+
+    public static function return_to_storefront($return_url, $order): string {
+        if (!$order instanceof WC_Order) return $return_url;
+
+        $storefront_url = self::storefront_url($order->get_meta('_zyra_headless_storefront_url'));
+        return $storefront_url ? $storefront_url . '/thank-you' : $return_url;
+    }
+
+    public static function allow_storefront_redirect_hosts(array $hosts): array {
+        foreach (self::allowed_origins() as $origin) {
+            $host = wp_parse_url($origin, PHP_URL_HOST);
+            if ($host) $hosts[] = $host;
+        }
+        return array_values(array_unique($hosts));
     }
 
     private static function error(string $message, int $status = 400): WP_Error {
@@ -336,6 +368,8 @@ final class Zyra_Luxe_Headless_API {
         $order->add_item($shipping_item);
         $order->calculate_totals();
         $order->update_meta_data('_zyra_headless_source', 'react');
+        $storefront_url = self::storefront_url($body['storefront_url'] ?? '');
+        if ($storefront_url) $order->update_meta_data('_zyra_headless_storefront_url', $storefront_url);
         $order->add_order_note('Order created by the Zyra Luxe React storefront.');
         if ($booking) {
             $booking_data = (array) ($body['booking'] ?? []);

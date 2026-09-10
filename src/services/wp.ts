@@ -397,6 +397,7 @@ export const wpService = {
       shipping: billing,
       payment_method: 'razorpay',
       payment_method_title: orderData.paymentMethod || 'Pending payment',
+      storefront_url: window.location.origin,
       shipping_method: orderData.shippingMethod,
       items: orderData.items?.map((item: any) => ({
         product_id: item.product.id,

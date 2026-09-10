@@ -362,11 +362,6 @@ export default function Checkout() {
     };
     try {
       const result = await api.createOrder(orderPayload);
-      if (result.paymentUrl && paymentMethodLabel === 'Razorpay') {
-        clearCart();
-        window.location.assign(result.paymentUrl);
-        return;
-      }
       const orderDate = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
       const estDeliveryDate = new Date(Date.now() + 4 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
       const orderData = {
@@ -400,6 +395,14 @@ export default function Checkout() {
           { time: 'Ready for dispatch', desc: 'Shipment will leave soon', type: 'secondary', icon: 'bi-truck' },
         ],
       };
+
+      if (result.paymentUrl && paymentMethodLabel === 'Razorpay') {
+        // The gateway returns to this origin after it confirms the payment.
+        window.sessionStorage.setItem('shopprime_last_order', JSON.stringify(orderData));
+        clearCart();
+        window.location.assign(result.paymentUrl);
+        return;
+      }
       window.sessionStorage.setItem('shopprime_last_order', JSON.stringify(orderData));
       clearCart();
       navigate('/thank-you', { state: { order: orderData } });
